@@ -1,2 +1,2 @@
-# c-learn
-![Logo](logo.png)
+# C Learn
+<img src="logo.png" alt="Logo" width="100">
