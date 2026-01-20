@@ -1,7 +1,8 @@
 ﻿#include <stdio.h>
-#include "include/utils/io/dataset.h"
+#include "src/matrix/matrix.h"
 
 int main() {
-    printf("test");
+    Matrix *m = read_csv("test.csv", ';', 1);
+    printf("%f", get(m, 2, 2));
     return 0;
 }
