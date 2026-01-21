@@ -101,7 +101,10 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
 }
 
 void print_matrix(const Matrix *X) {
-    if (X == NULL) return;
+    if (X == NULL) {
+        printf("Error: Matrix is NULL\n");
+        return;
+    }
     printf("[");
     for (int i = 0; i < X->rows; i++) {
         if (i > 0) printf("\n ");
@@ -116,7 +119,7 @@ void print_matrix(const Matrix *X) {
 }
 
 Matrix *slice_rows(const Matrix *X, const int start, const int end) {
-    if (start > end || end > X->rows || start < 0) {
+    if (!X || start < 0 || end < 0 || start >= X->rows || end > X->rows || start >= end) {
         printf("Error: Index Out of Bounds\n");
         return NULL;
     }
@@ -135,7 +138,7 @@ Matrix *slice_rows(const Matrix *X, const int start, const int end) {
 }
 
 Matrix *slice_cols(const Matrix *X, const int start, const int end) {
-    if (start > end || end > X->cols || start < 0) {
+    if (!X || start < 0 || end < 0 || start >= X->cols || end > X->cols || start >= end) {
         printf("Error: Index Out of Bounds\n");
         return NULL;
     }
@@ -155,5 +158,25 @@ Matrix *slice_cols(const Matrix *X, const int start, const int end) {
 }
 
 Matrix *slice(const Matrix *X, int start_i, int end_i, int start_j, int end_j) {
+    if (!X || start_i < 0 || end_i < 0 || start_j < 0 || end_j < 0 || start_i >= end_i || start_j >= end_j || start_i >= X->rows || end_i > X->rows || start_j >= X->cols || end_j > X->cols)
+    {
+        printf("Error: Index Out of Bounds\n");
+        return NULL;
+    }
 
+    Matrix* matrix = malloc(sizeof(Matrix));
+    *matrix = create_matrix(end_i-start_i, end_j-start_j);
+
+    int n_i = 0;
+    int n_j = 0;
+    for (int i = start_i; i < end_i; i++) {
+        for (int j = start_j; j < end_j; j++) {
+            set(matrix, n_i, n_j, get(X, i, j));
+            n_j++;
+        }
+        n_i++;
+        n_j = 0;
+    }
+
+    return matrix;
 }

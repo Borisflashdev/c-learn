@@ -21,4 +21,5 @@ Matrix *slice_rows(const Matrix *X, int start, int end);
 Matrix *slice_cols(const Matrix *X, int start, int end);
 Matrix *slice(const Matrix *X, int start_i, int end_i, int start_j, int end_j);
 
+
 #endif
