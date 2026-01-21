@@ -180,3 +180,167 @@ Matrix *slice(const Matrix *X, int start_i, int end_i, int start_j, int end_j) {
 
     return matrix;
 }
+
+void shape(const Matrix *X) {
+    if (X == NULL) {
+        printf("Error: Matrix is NULL\n");
+        return;
+    }
+
+    printf("(%d, %d)", X->rows, X->cols);
+}
+
+void size(const Matrix *X) {
+    if (X == NULL) {
+        printf("Error: Matrix is NULL\n");
+        return;
+    }
+
+    printf("%d", X->rows*X->cols);
+}
+
+Matrix *matrix_transpose(const Matrix *X) {
+    if (X == NULL) {
+        printf("Error: Matrix is NULL\n");
+        return NULL;
+    }
+
+    Matrix* matrix = malloc(sizeof(Matrix));
+    *matrix = create_matrix(X->cols, X->rows);
+
+    for (int i = 0; i < X->rows; i++) {
+        for (int j = 0; j < X->cols; j++) {
+            set(matrix, j, i, get(X, i, j));
+        }
+    }
+
+    return matrix;
+}
+
+Matrix *matrix_arithmetic(Matrix *A, Matrix *B, const char op) {
+    if (A == NULL) {
+        printf("Error: Matrix A is NULL\n");
+        return NULL;
+    }
+    if (B == NULL) {
+        printf("Error: Matrix B is NULL\n");
+        return NULL;
+    }
+    if (A->cols != B->cols || A->rows != B->rows) {
+        printf("Error: Matrix dimensions are not same\n");
+        return NULL;
+    }
+
+    Matrix* matrix = malloc(sizeof(Matrix));
+    *matrix = create_matrix(A->cols, A->rows);
+
+    for (int i = 0; i < A->rows; i++) {
+        for (int j = 0; j < A->cols; j++) {
+            if (op == '+') {
+                set(matrix, i, j, get(A, i, j)+get(B, i, j));
+            } else if (op == '-') {
+                set(matrix, i, j, get(A, i, j)-get(B, i, j));
+            } else if (op == '*') {
+                set(matrix, i, j, get(A, i, j)*get(B, i, j));
+            } else if (op == '/') {
+                set(matrix, i, j, get(A, i, j)/get(B, i, j));
+            } else {
+                printf("Error: Invalid Operation\n");
+                free_matrix(matrix);
+                return NULL;
+            }
+        }
+    }
+
+    return matrix;
+}
+
+Matrix *matrix_multiplication(Matrix *A, Matrix *B) {
+    if (A == NULL) {
+        printf("Error: Matrix A is NULL\n");
+        return NULL;
+    }
+    if (B == NULL) {
+        printf("Error: Matrix B is NULL\n");
+        return NULL;
+    }
+    if (A->cols != B->rows) {
+        printf("Error: Matrix dimensions are not defined\n");
+    }
+
+    Matrix* matrix = malloc(sizeof(Matrix));
+    *matrix = create_matrix(A->rows, B->cols);
+
+    for (int i = 0; i < A->rows; i++) {
+        for (int j = 0; j < B->cols; j++) {
+            double sum = 0.0;
+            for (int k = 0; k < A->cols; k++) {
+                sum += get(A, i, k) * get(B, k, j);
+            }
+            set(matrix, i, j, sum);
+        }
+    }
+
+    return matrix;
+}
+
+Matrix *matrix_scalar_arithmetic(Matrix *X, double scalar, char op) {
+    if (X == NULL) {
+        printf("Error: Matrix X is NULL\n");
+        return NULL;
+    }
+
+    Matrix* matrix = malloc(sizeof(Matrix));
+    *matrix = create_matrix(X->rows, X->cols);
+
+    for (int i = 0; i < X->rows; i++) {
+        for (int j = 0; j < X->cols; j++) {
+            if (op == '+') {
+                set(matrix, i, j, get(X, i, j)+scalar);
+            } else if (op == '-') {
+                set(matrix, i, j, get(X, i, j)-scalar);
+            } else if (op == '*') {
+                set(matrix, i, j, get(X, i, j)*scalar);
+            } else if (op == '/') {
+                set(matrix, i, j, get(X, i, j)/scalar);
+            } else {
+                printf("Error: Invalid Operation\n");
+                free_matrix(matrix);
+                return NULL;
+            }
+        }
+    }
+
+    return matrix;
+}
+
+Matrix *matrix_concat(Matrix *A, Matrix *B) {
+    if (A == NULL) {
+        printf("Error: Matrix A is NULL\n");
+    }
+    if (B == NULL) {
+        printf("Error: Matrix B is NULL\n");
+        return NULL;
+    }
+    if (A->rows != B->rows) {
+        printf("Error: Matrix rows are not same\n");
+        return NULL;
+    }
+
+    Matrix* matrix = malloc(sizeof(Matrix));
+    *matrix = create_matrix(A->rows, A->cols+B->cols);
+
+    for (int i = 0; i < A->rows; i++) {
+        for (int j = 0; j < A->cols; j++) {
+            set(matrix, i, j, get(A, i, j));
+        }
+    }
+
+    for (int i = 0; i < B->rows; i++) {
+        for (int j = 0; j < B->cols; j++) {
+            set(matrix, i, j + A->cols, get(B, i, j));
+        }
+    }
+
+    return matrix;
+}

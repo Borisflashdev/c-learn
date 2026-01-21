@@ -5,9 +5,10 @@ int main() {
     Matrix *m = read_csv("test.csv", ',', 0);
     print_matrix(m);
     printf("\n\n");
-    Matrix *m2 = slice(m, 3, 6, 1, 4);
+    Matrix *m2 = slice_cols(m, 4,5);
     print_matrix(m2);
     printf("\n\n");
-    printf("%f", get(m2, 2, 2));
+    Matrix *m3 = matrix_concat(m, m);
+    print_matrix(m3);
     return 0;
 }
