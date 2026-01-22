@@ -124,7 +124,61 @@ void matrix_print(const Matrix *X) {
     printf("]\n");
 }
 
-Matrix *slice_rows(const Matrix *X, const int start, const int end) {
+void matrix_print_head(const Matrix *X, int num) {
+    if (X == NULL) {
+        printf("Error: Matrix is NULL\n");
+        return;
+    }
+    if (num > X->rows || num < 1) {
+        printf("Error: Index Out of Bounds\n");
+        return;
+    }
+
+    printf("[");
+    for (int i = 0; i < num; i++) {
+        if (i > 0) printf("\n ");
+        printf("[");
+        for (int j = 0; j < X->cols; j++) {
+            printf("%lf",matrix_get(X, i, j));
+            if (j < X->cols - 1) printf(", ");
+        }
+        printf("]");
+    }
+    if (num == X->rows) {
+        printf("]\n");
+    } else {
+        printf("...]\n");
+    }
+}
+
+void matrix_print_tail(const Matrix *X, int num) {
+    if (X == NULL) {
+        printf("Error: Matrix is NULL\n");
+        return;
+    }
+    if (num > X->rows || num < 1) {
+        printf("Error: Index Out of Bounds\n");
+        return;
+    }
+
+    if (num == X->rows) {
+        printf("[");
+    } else {
+        printf("[...");
+    }
+    for (int i = X->rows - num; i < X->rows; i++) {
+        if (i > X->rows - num) printf("\n ");
+        printf("[");
+        for (int j = 0; j < X->cols; j++) {
+            printf("%lf", matrix_get(X, i, j));
+            if (j < X->cols - 1) printf(", ");
+        }
+        printf("]");
+    }
+    printf("]\n");
+}
+
+Matrix *matrix_slice_rows(const Matrix *X, const int start, const int end) {
     if (!X || start < 0 || end < 0 || start >= X->rows || end > X->rows || start >= end) {
         printf("Error: Index Out of Bounds\n");
         return NULL;
@@ -142,7 +196,7 @@ Matrix *slice_rows(const Matrix *X, const int start, const int end) {
     return matrix;
 }
 
-Matrix *slice_cols(const Matrix *X, const int start, const int end) {
+Matrix *matrix_slice_cols(const Matrix *X, const int start, const int end) {
     if (!X || start < 0 || end < 0 || start >= X->cols || end > X->cols || start >= end) {
         printf("Error: Index Out of Bounds\n");
         return NULL;
@@ -161,7 +215,7 @@ Matrix *slice_cols(const Matrix *X, const int start, const int end) {
     return matrix;
 }
 
-void shape(const Matrix *X) {
+void matrix_shape(const Matrix *X) {
     if (X == NULL) {
         printf("Error: Matrix is NULL\n");
         return;
@@ -170,7 +224,7 @@ void shape(const Matrix *X) {
     printf("(%d, %d)", X->rows, X->cols);
 }
 
-double size(const Matrix *X) {
+double matrix_size(const Matrix *X) {
     if (X == NULL) {
         printf("Error: Matrix is NULL\n");
         return 0;
@@ -243,7 +297,7 @@ Matrix *matrix_multiplication(Matrix *A, Matrix *B) {
         return NULL;
     }
     if (A->cols != B->rows) {
-        printf("Error: Matrix dimensions are not defined\n");
+        printf("Error: Matrix dimensions are incompatible for multiplication\n");
         return NULL;
     }
 
@@ -361,7 +415,7 @@ double matrix_mean(const Matrix *X) {
         }
     }
 
-    return sum / size(X);
+    return sum / matrix_size(X);
 }
 
 double matrix_col_sum(const Matrix *X, int col) {
@@ -419,4 +473,29 @@ double matrix_col_std(const Matrix *X, int col, int ddof) {
         var /= X->rows-1;
     }
     return sqrt(var);
+}
+
+double dot_product(const Matrix *A, const Matrix *B) {
+    if (A == NULL) {
+        printf("Error: Matrix A is NULL\n");
+        return 0;
+    }
+    if (B == NULL) {
+        printf("Error: Matrix B is NULL\n");
+        return 0;
+    }
+    if (A->rows != B->rows ) {
+        printf("Error: Vector dimensions are not the same\n");
+        return 0;
+    }
+    if (A->cols != 1 || B->cols != 1) {
+        printf("Error: Dot product is defined only for vectors\n");
+        return 0;
+    }
+
+    double sum = 0.0;
+    for (int i = 0; i < A->rows; i++) {
+        sum += matrix_get(A, i, 0) * matrix_get(B, i, 0);
+    }
+    return sum;
 }
