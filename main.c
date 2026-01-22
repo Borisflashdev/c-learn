@@ -9,7 +9,8 @@ int main() {
     matrix_print(m);
     matrix_shape(m);
     printf("\n");
-    matrix_apply_col(m, 3, sqrt);
+    matrix_set(m, 3, 3, 67676767);
     matrix_print(m);
+
     return 0;
 }
