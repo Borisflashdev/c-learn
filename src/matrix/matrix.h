@@ -43,6 +43,8 @@ double matrix_col_sum(const Matrix *X, int col);
 double matrix_col_mean(const Matrix *X, int col);
 double matrix_col_std(const Matrix *X, int col, int ddof);
 
-double dot_product(const Matrix *A, const Matrix *B);
+double matrix_col_dot_product(const Matrix *A, int col_A, const Matrix *B, int col_B);
+
+void matrix_apply_col(Matrix *X, int col, double (*func)(double));
 
 #endif

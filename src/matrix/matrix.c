@@ -475,7 +475,7 @@ double matrix_col_std(const Matrix *X, int col, int ddof) {
     return sqrt(var);
 }
 
-double dot_product(const Matrix *A, const Matrix *B) {
+double matrix_col_dot_product(const Matrix *A, int col_A, const Matrix *B, int col_B) {
     if (A == NULL) {
         printf("Error: Matrix A is NULL\n");
         return 0;
@@ -485,17 +485,42 @@ double dot_product(const Matrix *A, const Matrix *B) {
         return 0;
     }
     if (A->rows != B->rows ) {
-        printf("Error: Vector dimensions are not the same\n");
+        printf("Error: Matrix dimensions (rows) are not the same\n");
         return 0;
     }
-    if (A->cols != 1 || B->cols != 1) {
-        printf("Error: Dot product is defined only for vectors\n");
+    if (col_A < 0 || col_A >= A->cols) {
+        printf("Error: Index col_A Out of Bounds\n");
+        return 0;
+    }
+    if (col_B < 0 || col_B >= B->cols) {
+        printf("Error: Index col_B Out of Bounds\n");
         return 0;
     }
 
+
     double sum = 0.0;
     for (int i = 0; i < A->rows; i++) {
-        sum += matrix_get(A, i, 0) * matrix_get(B, i, 0);
+        sum += matrix_get(A, i, col_A) * matrix_get(B, i, col_B);
     }
     return sum;
+}
+
+void matrix_apply_col(Matrix *X, int col, double (*func)(double)) {
+    if (X == NULL) {
+        printf("Error: Matrix is NULL\n");
+        return;
+    }
+    if (col < 0 || col >= X->cols) {
+        printf("Error: Index Out of Bounds\n");
+        return;
+    }
+    if (func == NULL) {
+        printf("Error: Function is NULL\n");
+        return;
+    }
+
+    for (int i = 0; i < X->rows; i++) {
+        double val = matrix_get(X, i, col);
+        matrix_set(X, i, col, func(val));
+    }
 }
