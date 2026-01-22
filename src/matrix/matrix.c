@@ -1,21 +1,28 @@
 ﻿#include "matrix.h"
+
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
-Matrix create_matrix(const int rows, const int cols) {
-    Matrix matrix;
-    matrix.rows = rows;
-    matrix.cols = cols;
-    matrix.data = malloc(rows * cols * sizeof(double));
-    return matrix;
+Matrix *matrix_create(const int rows, const int cols) {
+    Matrix *X = malloc(sizeof(Matrix));
+    if (X == NULL) return NULL;
+
+    X->rows = rows;
+    X->cols = cols;
+    X->data = calloc(rows * cols, sizeof(double));
+
+    return X;
 }
 
-void free_matrix(Matrix *X) {
-    free(X->data);
-    free(X);
+void matrix_free(Matrix *X) {
+    if (X) {
+        free(X->data);
+        free(X);
+    }
 }
 
-double get(const Matrix *X, const int i, const int j) {
+double matrix_get(const Matrix *X, const int i, const int j) {
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
         printf("Error: Index Out of Bounds\n");
         return 0;
@@ -23,7 +30,7 @@ double get(const Matrix *X, const int i, const int j) {
     return X->data[i * X->cols + j];
 }
 
-void set(Matrix *X, const int i, const int j, const double value) {
+void matrix_set(Matrix *X, const int i, const int j, const double value) {
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
         printf("Error: Index Out of Bounds\n");
         return;
@@ -72,8 +79,7 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
 
     fseek(file, 0, SEEK_SET);
 
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(rows, cols);
+    Matrix *matrix = matrix_create(rows, cols);
 
     if (has_header == 1) {
         fgets(line, sizeof(line), file);
@@ -89,7 +95,7 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
         }
         while(token) {
             const double value = atof(token);
-            set(matrix, i, j, value);
+           matrix_set(matrix, i, j, value);
             token = strtok(NULL, sep);
             j++;
         }
@@ -100,7 +106,7 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
     return matrix;
 }
 
-void print_matrix(const Matrix *X) {
+void matrix_print(const Matrix *X) {
     if (X == NULL) {
         printf("Error: Matrix is NULL\n");
         return;
@@ -110,7 +116,7 @@ void print_matrix(const Matrix *X) {
         if (i > 0) printf("\n ");
         printf("[");
         for (int j = 0; j < X->cols; j++) {
-            printf("%lf", get(X, i, j));
+            printf("%lf",matrix_get(X, i, j));
             if (j < X->cols - 1) printf(", ");
         }
         printf("]");
@@ -124,13 +130,12 @@ Matrix *slice_rows(const Matrix *X, const int start, const int end) {
         return NULL;
     }
 
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(end-start, X->cols);
+    Matrix* matrix = matrix_create(end-start, X->cols);
 
     int n_i = 0;
     for (int i = start; i < end; i++) {
         for (int j = 0; j < X->cols; j++) {
-            set(matrix, n_i, j, get(X, i, j));
+           matrix_set(matrix, n_i, j,matrix_get(X, i, j));
         }
         n_i++;
     }
@@ -143,41 +148,16 @@ Matrix *slice_cols(const Matrix *X, const int start, const int end) {
         return NULL;
     }
 
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(X->rows, end-start);
+    Matrix* matrix = matrix_create(X->rows, end-start);
 
     int n_j = 0;
     for (int i = 0; i < X->rows; i++) {
         for (int j = start; j < end; j++) {
-            set(matrix, i, n_j, get(X, i, j));
+           matrix_set(matrix, i, n_j,matrix_get(X, i, j));
             n_j++;
         }
         n_j = 0;
     }
-    return matrix;
-}
-
-Matrix *slice(const Matrix *X, int start_i, int end_i, int start_j, int end_j) {
-    if (!X || start_i < 0 || end_i < 0 || start_j < 0 || end_j < 0 || start_i >= end_i || start_j >= end_j || start_i >= X->rows || end_i > X->rows || start_j >= X->cols || end_j > X->cols)
-    {
-        printf("Error: Index Out of Bounds\n");
-        return NULL;
-    }
-
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(end_i-start_i, end_j-start_j);
-
-    int n_i = 0;
-    int n_j = 0;
-    for (int i = start_i; i < end_i; i++) {
-        for (int j = start_j; j < end_j; j++) {
-            set(matrix, n_i, n_j, get(X, i, j));
-            n_j++;
-        }
-        n_i++;
-        n_j = 0;
-    }
-
     return matrix;
 }
 
@@ -190,13 +170,13 @@ void shape(const Matrix *X) {
     printf("(%d, %d)", X->rows, X->cols);
 }
 
-void size(const Matrix *X) {
+double size(const Matrix *X) {
     if (X == NULL) {
         printf("Error: Matrix is NULL\n");
-        return;
+        return 0;
     }
 
-    printf("%d", X->rows*X->cols);
+    return X->rows*X->cols;
 }
 
 Matrix *matrix_transpose(const Matrix *X) {
@@ -205,12 +185,11 @@ Matrix *matrix_transpose(const Matrix *X) {
         return NULL;
     }
 
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(X->cols, X->rows);
+    Matrix* matrix = matrix_create(X->cols, X->rows);
 
     for (int i = 0; i < X->rows; i++) {
         for (int j = 0; j < X->cols; j++) {
-            set(matrix, j, i, get(X, i, j));
+           matrix_set(matrix, j, i,matrix_get(X, i, j));
         }
     }
 
@@ -231,22 +210,21 @@ Matrix *matrix_arithmetic(Matrix *A, Matrix *B, const char op) {
         return NULL;
     }
 
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(A->cols, A->rows);
+    Matrix* matrix = matrix_create(A->rows, A->cols);
 
     for (int i = 0; i < A->rows; i++) {
         for (int j = 0; j < A->cols; j++) {
             if (op == '+') {
-                set(matrix, i, j, get(A, i, j)+get(B, i, j));
+               matrix_set(matrix, i, j,matrix_get(A, i, j)+matrix_get(B, i, j));
             } else if (op == '-') {
-                set(matrix, i, j, get(A, i, j)-get(B, i, j));
+               matrix_set(matrix, i, j,matrix_get(A, i, j)-matrix_get(B, i, j));
             } else if (op == '*') {
-                set(matrix, i, j, get(A, i, j)*get(B, i, j));
+               matrix_set(matrix, i, j,matrix_get(A, i, j)*matrix_get(B, i, j));
             } else if (op == '/') {
-                set(matrix, i, j, get(A, i, j)/get(B, i, j));
+               matrix_set(matrix, i, j,matrix_get(A, i, j)/matrix_get(B, i, j));
             } else {
                 printf("Error: Invalid Operation\n");
-                free_matrix(matrix);
+                matrix_free(matrix);
                 return NULL;
             }
         }
@@ -266,52 +244,46 @@ Matrix *matrix_multiplication(Matrix *A, Matrix *B) {
     }
     if (A->cols != B->rows) {
         printf("Error: Matrix dimensions are not defined\n");
+        return NULL;
     }
 
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(A->rows, B->cols);
+    Matrix* matrix = matrix_create(A->rows, B->cols);
 
     for (int i = 0; i < A->rows; i++) {
         for (int j = 0; j < B->cols; j++) {
             double sum = 0.0;
             for (int k = 0; k < A->cols; k++) {
-                sum += get(A, i, k) * get(B, k, j);
+                sum +=matrix_get(A, i, k) *matrix_get(B, k, j);
             }
-            set(matrix, i, j, sum);
+           matrix_set(matrix, i, j, sum);
         }
     }
 
     return matrix;
 }
 
-Matrix *matrix_scalar_arithmetic(Matrix *X, double scalar, char op) {
+void matrix_scalar_arithmetic(Matrix *X, double scalar, char op) {
     if (X == NULL) {
         printf("Error: Matrix X is NULL\n");
-        return NULL;
+        return;
     }
-
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(X->rows, X->cols);
 
     for (int i = 0; i < X->rows; i++) {
         for (int j = 0; j < X->cols; j++) {
             if (op == '+') {
-                set(matrix, i, j, get(X, i, j)+scalar);
+               matrix_set(X, i, j,matrix_get(X, i, j)+scalar);
             } else if (op == '-') {
-                set(matrix, i, j, get(X, i, j)-scalar);
+               matrix_set(X, i, j,matrix_get(X, i, j)-scalar);
             } else if (op == '*') {
-                set(matrix, i, j, get(X, i, j)*scalar);
+               matrix_set(X, i, j,matrix_get(X, i, j)*scalar);
             } else if (op == '/') {
-                set(matrix, i, j, get(X, i, j)/scalar);
+               matrix_set(X, i, j,matrix_get(X, i, j)/scalar);
             } else {
                 printf("Error: Invalid Operation\n");
-                free_matrix(matrix);
-                return NULL;
+                return ;
             }
         }
     }
-
-    return matrix;
 }
 
 Matrix *matrix_concat(Matrix *A, Matrix *B) {
@@ -327,20 +299,124 @@ Matrix *matrix_concat(Matrix *A, Matrix *B) {
         return NULL;
     }
 
-    Matrix* matrix = malloc(sizeof(Matrix));
-    *matrix = create_matrix(A->rows, A->cols+B->cols);
+    Matrix* matrix = matrix_create(A->rows, A->cols+B->cols);
 
     for (int i = 0; i < A->rows; i++) {
         for (int j = 0; j < A->cols; j++) {
-            set(matrix, i, j, get(A, i, j));
+           matrix_set(matrix, i, j,matrix_get(A, i, j));
         }
     }
 
     for (int i = 0; i < B->rows; i++) {
         for (int j = 0; j < B->cols; j++) {
-            set(matrix, i, j + A->cols, get(B, i, j));
+           matrix_set(matrix, i, j + A->cols,matrix_get(B, i, j));
         }
     }
 
     return matrix;
+}
+
+Matrix *matrix_copy(Matrix *X) {
+    if (X == NULL) {
+        printf("Error: Matrix X is NULL\n");
+        return NULL;
+    }
+
+    Matrix* matrix = matrix_create(X->rows, X->cols);
+    for (int i = 0; i < X->rows; i++) {
+        for (int j = 0; j < X->cols; j++) {
+            matrix_set(matrix, i, j, matrix_get(X, i, j));
+        }
+    }
+
+    return matrix;
+}
+
+double matrix_sum(const Matrix *X) {
+    if (X == NULL) {
+        printf("Error: Matrix X is NULL\n");
+        return 0;
+    }
+
+    double sum=0;
+    for (int i = 0; i < X->rows; i++) {
+        for (int j = 0; j < X->cols; j++) {
+            sum += matrix_get(X, i, j);
+        }
+    }
+
+    return sum;
+}
+
+double matrix_mean(const Matrix *X) {
+    if (X == NULL) {
+        printf("Error: Matrix X is NULL\n");
+        return 0;
+    }
+
+    double sum = 0;
+    for (int i = 0; i < X->rows; i++) {
+        for (int j = 0; j < X->cols; j++) {
+            sum += matrix_get(X, i, j);
+        }
+    }
+
+    return sum / size(X);
+}
+
+double matrix_col_sum(const Matrix *X, int col) {
+    if (X == NULL) {
+        printf("Error: Matrix X is NULL\n");
+        return 0;
+    }
+    if (col < 0 || col >= X->cols) {
+        printf("Error: Error: Index Out of Bounds\n");
+        return 0;
+    }
+
+    double sum = 0.0;
+    for (int i = 0; i < X->rows; i++) {
+        sum += matrix_get(X, i, col);
+    }
+
+    return sum;
+}
+
+double matrix_col_mean(const Matrix *X, int col) {
+    if (X == NULL) {
+        printf("Error: Matrix X is NULL\n");
+        return 0;
+    }
+    if (col < 0 || col >= X->cols) {
+        printf("Error: Index Out of Bounds\n");
+        return 0;
+    }
+
+    return matrix_col_sum(X, col) / X->rows;
+}
+
+double matrix_col_std(const Matrix *X, int col, int ddof) {
+    if (X == NULL) {
+        printf("Error: Matrix X is NULL\n");
+        return 0;
+    }
+    if (col < 0 || col >= X->cols) {
+        printf("Error: Index Out of Bounds\n");
+        return 0;
+    }
+
+    double mean = matrix_col_mean(X, col);
+    double var = 0.0;
+
+    for (int i = 0; i < X->rows; i++) {
+        double diff = matrix_get(X, i, col) - mean;
+        var += diff * diff;
+    }
+
+    if (ddof==0) {
+        var /= X->rows;
+    } else {
+        var /= X->rows-1;
+    }
+    return sqrt(var);
 }
