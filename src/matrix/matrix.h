@@ -1,6 +1,9 @@
 ﻿#ifndef MATRIX_H
 #define MATRIX_H
+
 #include <stdio.h>
+
+#include "../errors/errors.h"
 
 typedef struct {
     int rows;
@@ -32,9 +35,13 @@ Matrix *matrix_arithmetic(const Matrix *A, const Matrix *B, char op);
 Matrix *matrix_multiplication(const Matrix *A, const Matrix *B);
 void matrix_scalar_arithmetic(const Matrix *X, double scalar, char op);
 
+double matrix_min(const Matrix *X);
+double matrix_max(const Matrix *X);
 double matrix_sum(const Matrix *X);
 double matrix_mean(const Matrix *X);
 
+double matrix_col_min(const Matrix *X, int col);
+double matrix_col_max(const Matrix *X, int col);
 double matrix_col_sum(const Matrix *X, int col);
 double matrix_col_mean(const Matrix *X, int col);
 double matrix_col_std(const Matrix *X, int col, int ddof);
