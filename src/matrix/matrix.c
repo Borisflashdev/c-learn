@@ -6,12 +6,12 @@
 
 Matrix *matrix_create(const int rows, const int cols) {
     if (rows < 1 || cols < 1) {
-        fprintf(stderr, "Error: Invalid matrix dimensions\n");
+        fprintf(stderr, "\n\nError: Invalid matrix dimensions\n");
         return NULL;
     }
     Matrix *X = malloc(sizeof(Matrix));
     if (!X) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\n\nError: Memory allocation failed\n");
         return NULL;
     }
 
@@ -24,13 +24,13 @@ Matrix *matrix_create(const int rows, const int cols) {
 
 Matrix *matrix_copy(const Matrix *X) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot copy NULL matrix\n");
+        fprintf(stderr, "\n\nError: Cannot copy NULL matrix\n");
         return NULL;
     }
 
     Matrix* copy = matrix_create(X->rows, X->cols);
     if (!copy) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return NULL;
     }
     memcpy(copy->data, X->data, sizeof(double) * X->rows * X->cols);
@@ -43,17 +43,17 @@ void matrix_free(Matrix *X) {
         free(X->data);
         free(X);
     } else {
-        fprintf(stderr, "Error: Cannot free NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot free NULL matrix\n");
     }
 }
 
 double matrix_get(const Matrix *X, const int i, const int j) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot get element in NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot get element in NULL matrix\n");
         return 0;
     }
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
-        fprintf(stderr, "Error: Index out of bounds\n");
+        fprintf(stderr, "\nError: Index out of bounds\n");
         return 0;
     }
     return X->data[i * X->cols + j];
@@ -61,11 +61,11 @@ double matrix_get(const Matrix *X, const int i, const int j) {
 
 void matrix_set(const Matrix *X, const int i, const int j, const double value) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot set element in NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot set element in NULL matrix\n");
         return;
     }
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
-        fprintf(stderr, "Error: Index out of bounds\n");
+        fprintf(stderr, "\nError: Index out of bounds\n");
         return;
     }
     X->data[i * X->cols + j] = value;
@@ -73,12 +73,12 @@ void matrix_set(const Matrix *X, const int i, const int j, const double value) {
 
 Matrix *read_csv(const char *path, const char separator, const int has_header) {
     if (has_header < 0 || has_header > 1) {
-        fprintf(stderr, "Error: Property 'has_header' must be 0 or 1\n");
+        fprintf(stderr, "\nError: Property 'has_header' must be 0 or 1\n");
         return NULL;
     }
     FILE *file = fopen(path, "r");
     if (!file) {
-        fprintf(stderr,"Error: File %s not found\n", path);
+        fprintf(stderr,"\nError: File %s not found\n", path);
         return NULL;
     }
 
@@ -112,14 +112,14 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
     }
 
     if (rows == 0 || cols == 0) {
-        fprintf(stderr, "Error: Empty CSV file\n");
+        fprintf(stderr, "\nError: Empty CSV file\n");
         fclose(file);
         return NULL;
     }
 
     Matrix *X = matrix_create(rows, cols);
     if (!X) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         fclose(file);
         return NULL;
     }
@@ -145,14 +145,14 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
 
 void matrix_print(const Matrix *X) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot print NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot print NULL matrix\n");
         return;
     }
 
     const size_t buf_size = X->rows * X->cols * 32 + 64;
     char *buf = malloc(buf_size);
     if (!buf) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return;
     }
 
@@ -176,11 +176,11 @@ void matrix_print(const Matrix *X) {
 
 void matrix_print_head(const Matrix *X, const int num) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot print NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot print NULL matrix\n");
         return;
     }
     if (num < 1 || num > X->rows) {
-        fprintf(stderr, "Error: Index out of bounds\n");
+        fprintf(stderr, "\nError: Index out of bounds\n");
         return;
     }
 
@@ -199,11 +199,11 @@ void matrix_print_head(const Matrix *X, const int num) {
 
 void matrix_print_tail(const Matrix *X, const int num) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot print NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot print NULL matrix\n");
         return;
     }
     if (num > X->rows || num < 1) {
-        fprintf(stderr, "Error: Index out of bounds\n");
+        fprintf(stderr, "\nError: Index out of bounds\n");
         return;
     }
 
@@ -224,7 +224,7 @@ void matrix_print_tail(const Matrix *X, const int num) {
 
 void matrix_shape(const Matrix *X) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot get shape of NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot get shape of NULL matrix\n");
         return;
     }
 
@@ -233,7 +233,7 @@ void matrix_shape(const Matrix *X) {
 
 double matrix_size(const Matrix *X) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot get size of NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot get size of NULL matrix\n");
         return 0;
     }
 
@@ -242,13 +242,13 @@ double matrix_size(const Matrix *X) {
 
 Matrix *matrix_transpose(const Matrix *X) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot transpose NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot transpose NULL matrix\n");
         return NULL;
     }
 
     Matrix* transposed_matrix = matrix_create(X->cols, X->rows);
     if (!transposed_matrix) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return NULL;
     }
 
@@ -263,7 +263,7 @@ Matrix *matrix_transpose(const Matrix *X) {
 
 Matrix *matrix_slice_rows(const Matrix *X, const int start, const int end) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot slice NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot slice NULL matrix\n");
         return NULL;
     }
     if (start < 0 || end < 0 || start >= X->rows || end > X->rows || start >= end) {
@@ -274,7 +274,7 @@ Matrix *matrix_slice_rows(const Matrix *X, const int start, const int end) {
     const int rows = end - start;
     Matrix* slice = matrix_create(rows, X->cols);
     if (!slice) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return NULL;
     }
 
@@ -286,7 +286,7 @@ Matrix *matrix_slice_rows(const Matrix *X, const int start, const int end) {
 
 Matrix *matrix_slice_cols(const Matrix *X, const int start, const int end) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot slice NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot slice NULL matrix\n");
         return NULL;
     }
     if (start < 0 || end < 0 || start >= X->cols || end > X->cols || start >= end) {
@@ -297,7 +297,7 @@ Matrix *matrix_slice_cols(const Matrix *X, const int start, const int end) {
     const int cols = end - start;
     Matrix* slice = matrix_create(X->rows, cols);
     if (!slice) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return NULL;
     }
 
@@ -311,18 +311,18 @@ Matrix *matrix_slice_cols(const Matrix *X, const int start, const int end) {
 
 Matrix *matrix_concat(const Matrix *A, const Matrix *B) {
     if (!A || !B) {
-        fprintf(stderr, "Error: Cannot concatenate NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot concatenate NULL matrix\n");
         return NULL;
     }
     if (A->rows != B->rows) {
-        fprintf(stderr, "Error: Matrix row dimensions must match\n");
+        fprintf(stderr, "\nError: Matrix row dimensions must match\n");
         return NULL;
     }
 
     const int cols = A->cols + B->cols;
     Matrix* C = matrix_create(A->rows, cols);
     if (!C) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return NULL;
     }
 
@@ -336,17 +336,17 @@ Matrix *matrix_concat(const Matrix *A, const Matrix *B) {
 
 Matrix *matrix_arithmetic(const Matrix *A, const Matrix *B, const char op) {
     if (!A || !B) {
-        fprintf(stderr, "Error: Cannot perform arithmetic on NULL matrix.\n");
+        fprintf(stderr, "\nError: Cannot perform arithmetic on NULL matrix\n");
         return NULL;
     }
     if (A->cols != B->cols || A->rows != B->rows) {
-        fprintf(stderr, "Error: Matrix dimensions must match\n");
+        fprintf(stderr, "\nError: Matrix dimensions must match\n");
         return NULL;
     }
 
     Matrix* C = matrix_create(A->rows, A->cols);
     if (!C) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return NULL;
     }
 
@@ -367,7 +367,7 @@ Matrix *matrix_arithmetic(const Matrix *A, const Matrix *B, const char op) {
         case '/':
             for (int i = 0; i < size; i++) {
                 if (B->data[i] == 0) {
-                    fprintf(stderr, "Error: Division by zero\n");
+                    fprintf(stderr, "\nError: Division by zero\n");
                     matrix_free(C);
                     return NULL;
                 }
@@ -375,7 +375,7 @@ Matrix *matrix_arithmetic(const Matrix *A, const Matrix *B, const char op) {
             }
             break;
         default:
-            fprintf(stderr, "Error: Invalid operator '%c'\n", op);
+            fprintf(stderr, "\nError: Invalid operator '%c'\n", op);
             matrix_free(C);
             return NULL;
     }
@@ -385,17 +385,17 @@ Matrix *matrix_arithmetic(const Matrix *A, const Matrix *B, const char op) {
 // TODO: try faster multiply (strassen? winograd)
 Matrix *matrix_multiplication(const Matrix *A, const Matrix *B) {
     if (!A || !B) {
-        fprintf(stderr, "Error: Cannot multiply NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot multiply NULL matrix\n");
         return NULL;
     }
     if (A->cols != B->rows) {
-        fprintf(stderr, "Error: Incompatible dimensions for multiplication\n");
+        fprintf(stderr, "\nError: Incompatible dimensions for multiplication\n");
         return NULL;
     }
 
     Matrix* C = matrix_create(A->rows, B->cols);
     if (!C) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return NULL;
     }
 
@@ -405,7 +405,7 @@ Matrix *matrix_multiplication(const Matrix *A, const Matrix *B) {
 
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < p; j++) {
-            double sum = 0.0;
+            double sum = 0;
             for (int k = 0; k < n; k++) {
                 sum += A->data[i * n + k] * B->data[k * p + j];
             }
@@ -418,7 +418,7 @@ Matrix *matrix_multiplication(const Matrix *A, const Matrix *B) {
 
 void matrix_scalar_arithmetic(const Matrix *X, const double scalar, const char op) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot perform scalar arithmetic on NULL matrix.\n");
+        fprintf(stderr, "\nError: Cannot perform scalar arithmetic on NULL matrix\n");
         return;
     }
 
@@ -437,21 +437,55 @@ void matrix_scalar_arithmetic(const Matrix *X, const double scalar, const char o
                 X->data[i] *= scalar;
             break;
         case '/':
-            if (scalar == 0.0) {
-                fprintf(stderr, "Error: Division by zero\n");
+            if (scalar == 0) {
+                fprintf(stderr, "\nError: Division by zero\n");
                 return;
             }
             for (int i = 0; i < size; i++)
                 X->data[i] /= scalar;
             break;
         default:
-            fprintf(stderr, "Error: Invalid operator '%c'\n", op);
+            fprintf(stderr, "\nError: Invalid operator '%c'\n", op);
     }
+}
+
+double matrix_min(const Matrix *X) {
+    if (!X) {
+        fprintf(stderr, "\nError: Cannot perform minimum NULL matrix\n");
+        return 0;
+    }
+
+    const int size = X->rows * X->cols;
+    double min = X->data[0];
+    for (int i = 1; i < size; i++) {
+        if (X->data[i] < min) {
+            min = X->data[i];
+        }
+    }
+
+    return min;
+}
+
+double matrix_max(const Matrix *X) {
+    if (!X) {
+        fprintf(stderr, "\nError: Cannot perform maximum NULL matrix\n");
+        return 0;
+    }
+
+    const int size = X->rows * X->cols;
+    double max = X->data[0];
+    for (int i = 1; i < size; i++) {
+        if (X->data[i] > max) {
+            max = X->data[i];
+        }
+    }
+
+    return max;
 }
 
 double matrix_sum(const Matrix *X) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot calculate sum of NULL matrix.\n");
+        fprintf(stderr, "\nError: Cannot calculate sum of NULL matrix\n");
         return 0;
     }
 
@@ -466,7 +500,7 @@ double matrix_sum(const Matrix *X) {
 
 double matrix_mean(const Matrix *X) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot calculate mean of NULL matrix.\n");
+        fprintf(stderr, "\nError: Cannot calculate mean of NULL matrix\n");
         return 0;
     }
 
@@ -479,13 +513,54 @@ double matrix_mean(const Matrix *X) {
     return sum / size;
 }
 
-double matrix_col_sum(const Matrix *X, const int col) {
+double matrix_col_min(const Matrix *X, const int col) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot calculate column sum of NULL matrix.\n");
+        fprintf(stderr, "\nError: Cannot calculate column min of NULL matrix\n");
         return 0;
     }
     if (col < 0 || col >= X->cols) {
-        fprintf(stderr, "Error: Index out of bounds\n");
+        fprintf(stderr, "\nError: Index out of bounds\n");
+        return 0;
+    }
+
+    const int n = X->rows;
+    const int stride = X->cols;
+    double min = X->data[col];
+    for (int i = 1; i < n; i++) {
+        const double val = X->data[i * stride + col];
+        if (val < min) min = val;
+    }
+
+    return min;
+}
+double matrix_col_max(const Matrix *X, const int col) {
+    if (!X) {
+        fprintf(stderr, "\nError: Cannot calculate column max of NULL matrix\n");
+        return 0;
+    }
+    if (col < 0 || col >= X->cols) {
+        fprintf(stderr, "\nError: Index out of bounds\n");
+        return 0;
+    }
+
+    const int n = X->rows;
+    const int stride = X->cols;
+    double max = X->data[col];
+    for (int i = 1; i < n; i++) {
+        const double val = X->data[i * stride + col];
+        if (val > max) max = val;
+    }
+
+    return max;
+}
+
+double matrix_col_sum(const Matrix *X, const int col) {
+    if (!X) {
+        fprintf(stderr, "\nError: Cannot calculate column sum of NULL matrix\n");
+        return 0;
+    }
+    if (col < 0 || col >= X->cols) {
+        fprintf(stderr, "\nError: Index out of bounds\n");
         return 0;
     }
 
@@ -500,15 +575,15 @@ double matrix_col_sum(const Matrix *X, const int col) {
 
 double matrix_col_mean(const Matrix *X, const int col) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot calculate column mean of NULL matrix.\n");
+        fprintf(stderr, "\nError: Cannot calculate column mean of NULL matrix\n");
         return 0;
     }
     if (col < 0 || col >= X->cols) {
-        fprintf(stderr, "Error: Index out of bounds\n");
+        fprintf(stderr, "\nError: Index out of bounds\n");
         return 0;
     }
 
-    double sum = 0.0;
+    double sum = 0;
     const int stride = X->cols;
     for (int i = 0; i < X->rows; i++) {
         sum += X->data[i * stride + col];
@@ -519,27 +594,27 @@ double matrix_col_mean(const Matrix *X, const int col) {
 
 double matrix_col_std(const Matrix *X, const int col, const int ddof) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot calculate standard deviation of NULL matrix.\n");
+        fprintf(stderr, "\nError: Cannot calculate standard deviation of NULL matrix\n");
         return 0;
     }
     if (col < 0 || col >= X->cols) {
-        fprintf(stderr, "Error: Index out of bounds\n");
+        fprintf(stderr, "\nError: Index out of bounds\n");
         return 0;
     }
     if (ddof != 0 && ddof != 1) {
-        fprintf(stderr, "Error: Property 'ddof' must be 0 or 1\n");
+        fprintf(stderr, "\nError: Property 'ddof' must be 0 or 1\n");
     }
 
     const int n = X->rows;
     const int stride = X->cols;
-    double mean = 0.0;
+    double mean = 0;
 
     for (int i = 0; i < n; i++) {
         mean += X->data[i * stride + col];
     }
     mean /= n;
 
-    double var = 0.0;
+    double var = 0;
     for (int i = 0; i < n; i++) {
         const double diff = X->data[i * stride + col] - mean;
         var += diff * diff;
@@ -555,23 +630,23 @@ double matrix_col_std(const Matrix *X, const int col, const int ddof) {
 
 double matrix_col_dot_product(const Matrix *A, const int col_A, const Matrix *B, const int col_B) {
     if (!A || !B) {
-        fprintf(stderr, "Error: Cannot compute dot product with NULL matrix.\n");
-        return 0.0;
+        fprintf(stderr, "\nError: Cannot compute dot product with NULL matrix\n");
+        return 0;
     }
     if (A->rows != B->rows) {
-        fprintf(stderr, "Error: Row dimensions must match for dot product\n");
-        return 0.0;
+        fprintf(stderr, "\nError: Row dimensions must match for dot product\n");
+        return 0;
     }
     if (col_A < 0 || col_A >= A->cols) {
-        fprintf(stderr, "Error: Index col_A out of bounds\n");
+        fprintf(stderr, "\nError: Index col_A out of bounds\n");
         return 0;
     }
     if (col_B < 0 || col_B >= B->cols) {
-        fprintf(stderr, "Error: Index col_B out of bounds\n");
+        fprintf(stderr, "\nError: Index col_B out of bounds\n");
         return 0;
     }
 
-    double sum = 0.0;
+    double sum = 0;
     const int n = A->rows;
     const int stride_A = A->cols;
     const int stride_B = B->cols;
@@ -585,15 +660,15 @@ double matrix_col_dot_product(const Matrix *A, const int col_A, const Matrix *B,
 
 void matrix_apply_col(const Matrix *X, const int col, double (*func)(double)) {
     if (!X) {
-        fprintf(stderr, "Error: Cannot apply function to NULL matrix.\n");
+        fprintf(stderr, "\nError: Cannot apply function to NULL matrix\n");
         return;
     }
     if (!func) {
-        fprintf(stderr, "Error: Function pointer is NULL.\n");
+        fprintf(stderr, "\nError: Function pointer is NULL\n");
         return;
     }
     if (col < 0 || col >= X->cols) {
-        fprintf(stderr, "Error: Index out of bounds\n");
+        fprintf(stderr, "\nError: Index out of bounds\n");
         return;
     }
 
