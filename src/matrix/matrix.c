@@ -6,12 +6,12 @@
 
 Matrix *matrix_create(const int rows, const int cols) {
     if (rows < 1 || cols < 1) {
-        fprintf(stderr, "\n\nError: Invalid matrix dimensions\n");
+        fprintf(stderr, "\nError: Invalid matrix dimensions\n");
         return NULL;
     }
     Matrix *X = malloc(sizeof(Matrix));
     if (!X) {
-        fprintf(stderr, "\n\nError: Memory allocation failed\n");
+        fprintf(stderr, "\nError: Memory allocation failed\n");
         return NULL;
     }
 
@@ -24,7 +24,7 @@ Matrix *matrix_create(const int rows, const int cols) {
 
 Matrix *matrix_copy(const Matrix *X) {
     if (!X) {
-        fprintf(stderr, "\n\nError: Cannot copy NULL matrix\n");
+        fprintf(stderr, "\nError: Cannot copy NULL matrix\n");
         return NULL;
     }
 
@@ -132,7 +132,16 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
         const char sep[2] = {separator, '\0'};
         const char *token = strtok(line, sep);
         while(token && j < cols) {
-            matrix_set(X, i, j, atof(token));
+            char *endptr;
+            errno = 0;
+            double val = strtod(token, &endptr);
+
+            if (errno != 0 || endptr == token) {
+                fprintf(stderr, "\nWarning: Invalid element at [%d,%d], set to 0\n", i, j);
+                val = 0;
+            }
+
+            X->data[i * X->cols + j] = val;
             token = strtok(NULL, sep);
             j++;
         }
