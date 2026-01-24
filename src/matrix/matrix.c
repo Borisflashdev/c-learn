@@ -6,7 +6,7 @@
 
 Matrix *matrix_create(const int rows, const int cols) {
     if (rows < 1 || cols < 1) {
-        fprintf(stderr, "\nError: Invalid matrix dimensions\n");
+        fprintf(stderr, "Error: Invalid matrix dimensions\n");
         return NULL;
     }
     Matrix *X = malloc(sizeof(Matrix));
@@ -24,7 +24,7 @@ Matrix *matrix_create(const int rows, const int cols) {
 
 Matrix *matrix_copy(const Matrix *X) {
     if (X == NULL) {
-        fprintf(stderr, "\nError: Cannot copy NULL matrix\n");
+        fprintf(stderr, "Error: Cannot copy NULL matrix\n");
         return NULL;
     }
 
@@ -43,17 +43,17 @@ void matrix_free(Matrix *X) {
         free(X->data);
         free(X);
     } else {
-        fprintf(stderr, "\nError: Cannot free NULL matrix\n");
+        fprintf(stderr, "Error: Cannot free NULL matrix\n");
     }
 }
 
 double matrix_get(const Matrix *X, const int i, const int j) {
     if (!X) {
-        fprintf(stderr, "\nError: Cannot get element in NULL matrix\n");
+        fprintf(stderr, "Error: Cannot get element in NULL matrix\n");
         return 0;
     }
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
-        fprintf(stderr, "\nError: Index out of bounds\n");
+        fprintf(stderr, "Error: Index out of bounds\n");
         return 0;
     }
     return X->data[i * X->cols + j];
@@ -61,11 +61,11 @@ double matrix_get(const Matrix *X, const int i, const int j) {
 
 void matrix_set(const Matrix *X, const int i, const int j, const double value) {
     if (!X) {
-        fprintf(stderr, "\nError: Cannot set element in NULL matrix\n");
+        fprintf(stderr, "Error: Cannot set element in NULL matrix\n");
         return;
     }
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
-        fprintf(stderr, "\nError: Index out of bounds\n");
+        fprintf(stderr, "Error: Index out of bounds\n");
         return;
     }
     X->data[i * X->cols + j] = value;
@@ -73,66 +73,66 @@ void matrix_set(const Matrix *X, const int i, const int j, const double value) {
 
 Matrix *read_csv(const char *path, const char separator, const int has_header) {
     if (has_header < 0 || has_header > 1) {
-        fprintf(stderr, "\nError: Property 'has_header' must be 0 or 1\n");
+        fprintf(stderr, "Error: Property 'has_header' must be 0 or 1\n");
         return NULL;
     }
     FILE *file = fopen(path, "r");
     if (!file) {
-        fprintf(stderr,"\nError: File %s not found\n", path);
+        fprintf(stderr,"Error: File %s not found\n", path);
         return NULL;
     }
 
     char line[1024];
-    //------------------------BOM------------------------//
-    int is_bom = 0;
+
+    // BOM
     const int c1 = fgetc(file);
     const int c2 = fgetc(file);
     const int c3 = fgetc(file);
-    if (c1 == 0xEF && c2 == 0xBB && c3 == 0xBF) {
-        is_bom = 1;
+    if (!(c1 == 0xEF && c2 == 0xBB && c3 == 0xBF)) {
+        rewind(file);
     }
-    //--------------------Count cols--------------------//
-    fgets(line, sizeof(line), file);
-    int cols = 1;
-    for (int i = 0; i < strlen(line); i++) {
-        if (line[i] == separator) {
-            cols++;
-        }
-    }
-    //--------------------Count rows--------------------//
-    int rows = 1;
-    while(fgets(line, sizeof(line), file)) {
-        if (strlen(line) > 1) {
-            rows++;
-        }
-    }
-    if (has_header == 1) {
-        rows--;
-    }
-    if (cols == 1) {
-        rows++;
-    }
-    //--------------------------------------------------//
-
-    fseek(file, 0, SEEK_SET);
-
-    Matrix *matrix = matrix_create(rows, cols);
 
     if (has_header == 1) {
         fgets(line, sizeof(line), file);
     }
 
-    int i=0;
+    int rows = 0;
+    int cols = 0;
+    const long data_start = ftell(file);
+
     while(fgets(line, sizeof(line), file)) {
-        int j=0;
-        const char sep[2] = {separator, '\0'};
-        const char *token = strtok(line, sep);
-        if (i==0 && is_bom==1 && has_header == 0) {
-            memmove(token, token + 3, strlen(token + 3) + 1);
+        if (rows == 0) {
+            cols = 1;
+            for (int i = 0; line[i] != '\0' && line[i] != '\n' && line[i] != '\r'; i++) {
+                if (line[i] == separator) {
+                    cols++;
+                }
+            }
         }
-        while(token) {
-            const double value = atof(token);
-           matrix_set(matrix, i, j, value);
+        rows++;
+    }
+
+    if (rows == 0 || cols == 0) {
+        fprintf(stderr, "Error: Empty CSV file\n");
+        fclose(file);
+        return NULL;
+    }
+
+    Matrix *matrix = matrix_create(rows, cols);
+    if (!matrix) {
+        fclose(file);
+        return NULL;
+    }
+
+    fseek(file, data_start, SEEK_SET);
+
+    int i = 0;
+    while(fgets(line, sizeof(line), file) && i < rows) {
+        int j = 0;
+        const char sep[2] = {separator, '\0'};
+        char *token = strtok(line, sep);
+        while(token && j < cols) {
+            matrix_set(matrix, i, j, atof(token));
             token = strtok(NULL, sep);
             j++;
         }
@@ -145,7 +145,7 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
 
 void matrix_print(const Matrix *X) {
     if (X == NULL) {
-        fprintf(stderr, "\nError: Cannot print NULL matrix\n");
+        fprintf(stderr, "Error: Cannot print NULL matrix\n");
         return;
     }
     printf("[");
@@ -163,11 +163,11 @@ void matrix_print(const Matrix *X) {
 
 void matrix_print_head(const Matrix *X, const int num) {
     if (X == NULL) {
-        fprintf(stderr, "\nError: Cannot print NULL matrix\n");
+        fprintf(stderr, "Error: Cannot print NULL matrix\n");
         return;
     }
     if (num > X->rows || num < 1) {
-        fprintf(stderr, "\nError: Index out of bounds\n");
+        fprintf(stderr, "Error: Index out of bounds\n");
         return;
     }
 
@@ -190,11 +190,11 @@ void matrix_print_head(const Matrix *X, const int num) {
 
 void matrix_print_tail(const Matrix *X, const int num) {
     if (X == NULL) {
-        fprintf(stderr, "\nError: Cannot print NULL matrix\n");
+        fprintf(stderr, "Error: Cannot print NULL matrix\n");
         return;
     }
     if (num > X->rows || num < 1) {
-        fprintf(stderr, "\nError: Index out of bounds\n");
+        fprintf(stderr, "Error: Index out of bounds\n");
         return;
     }
 
