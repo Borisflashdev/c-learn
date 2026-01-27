@@ -10,4 +10,6 @@
 #define ALLOCATION_ERROR(fmt, ...) fprintf(stderr, "\nError: Memory allocation failed (%s:%d)\n", __func__, __LINE__)
 #define INDEX_ERROR(fmt, ...) fprintf(stderr, "\nError: Index out of bounds (%s:%d)\n", __func__, __LINE__)
 
+#define NULL_SCALER_ERROR(fmt, ...) fprintf(stderr, "\nError: NULL scaler detected (%s:%d)\n", __func__, __LINE__)
+
 #endif

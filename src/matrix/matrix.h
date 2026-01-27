@@ -27,6 +27,7 @@ void matrix_shape(const Matrix *X);
 double matrix_size(const Matrix *X);
 
 Matrix *matrix_transpose(const Matrix *X);
+Matrix *matrix_slice(const Matrix *X, int i_start, int i_end, int j_start, int j_end);
 Matrix *matrix_slice_rows(const Matrix *X, int start, int end);
 Matrix *matrix_slice_cols(const Matrix *X, int start, int end);
 Matrix *matrix_concat(const Matrix *A, const Matrix *B);
