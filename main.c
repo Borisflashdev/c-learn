@@ -6,14 +6,16 @@
 #include "src/scaler/scaler.h"
 
 int main() {
-    Matrix *A = read_csv("test_data.csv", ',', 0);
-    matrix_print(A);
-    printf("\n\n");
-    Scaler *scaler = scaler_create(STANDARDIZATION, 0, A->cols);
-    scaler_fit_transform(scaler, A);
-    matrix_print(A);
-    printf("\n\n");
-    scaler_inverse_transform(scaler, A);
-    matrix_print(A);
+    // Import DataFrame
+    Matrix *df = read_csv("test_data.csv", ',', 0);
+
+    // Split DataFrame in X_train, y_train, X_test, y_test
+    Matrix *X_train = matrix_slice(df, 0, 15, 0, df->cols-1);
+    Matrix *X_test = matrix_slice(df, 15, df->rows, 0, df->cols-1);
+    Matrix *y_train = matrix_slice(df, 0, 15, df->cols-1, df->cols);
+    Matrix *y_test = matrix_slice(df, 15, df->rows, df->cols-1, df->cols);
+
+    // Free DataFrame
+    free(df);
     return 0;
 }

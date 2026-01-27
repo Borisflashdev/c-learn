@@ -71,6 +71,7 @@ void matrix_set(const Matrix *X, const int i, const int j, const double value) {
     X->data[i * X->cols + j] = value;
 }
 
+// BUG: fix BOM check
 Matrix *read_csv(const char *path, const char separator, const int has_header) {
     if (has_header < 0 || has_header > 1) {
         CUSTOM_ERROR("Property 'has_header' must be 0 or 1");
@@ -268,6 +269,36 @@ Matrix *matrix_transpose(const Matrix *X) {
     }
 
     return transposed_matrix;
+}
+
+Matrix *matrix_slice(const Matrix *X, const int i_start, const int i_end, const int j_start, const int j_end) {
+    if (!X) {
+        NULL_MATRIX_ERROR();
+        return NULL;
+    }
+    if (i_start < 0 || i_end < 0 || i_start >= X->rows || i_end > X->rows || i_start >= i_end) {
+        INDEX_ERROR();
+        return NULL;
+    }
+    if (j_start < 0 || j_end < 0 || j_start >= X->cols || j_end > X->cols || j_start >= j_end) {
+        INDEX_ERROR();
+        return NULL;
+    }
+
+    const int rows = i_end - i_start;
+    const int cols = j_end - j_start;
+    Matrix* slice = matrix_create(rows, cols);
+    if (!slice) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            slice->data[i * slice->cols + j] = X->data[(i_start + i) * X->cols + (j_start + j)];
+        }
+    }
+    return slice;
 }
 
 Matrix *matrix_slice_rows(const Matrix *X, const int start, const int end) {
