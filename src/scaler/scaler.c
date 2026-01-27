@@ -50,6 +50,7 @@ void scaler_fit(Scaler *scaler, Matrix *X) {
     }
     if (scaler->col_start > X->cols || scaler->col_end > X->cols) {
         INDEX_ERROR();
+        return;
     }
 
     scaler->params1 = malloc(sizeof(double) * scaler->num_cols);
@@ -105,6 +106,7 @@ void scaler_transform(Scaler *scaler, Matrix *X) {
     }
     if (scaler->col_start > X->cols || scaler->col_end > X->cols) {
         INDEX_ERROR();
+        return;
     }
     if (scaler->fitted == 0) {
         CUSTOM_ERROR("Scaler must be fitted before use");
@@ -152,5 +154,58 @@ void scaler_fit_transform(Scaler *scaler, Matrix *X) {
         scaler_transform(scaler, X);
     } else {
         ALLOCATION_ERROR();
+    }
+}
+
+void scaler_inverse_transform(Scaler *scaler, Matrix *X) {
+    if (!scaler) {
+        NULL_SCALER_ERROR();
+        return;
+    }
+    if (!X) {
+        NULL_MATRIX_ERROR();
+        return;
+    }
+    if (scaler->col_start > X->cols || scaler->col_end > X->cols) {
+        INDEX_ERROR();
+        return;
+    }
+    if (scaler->fitted == 0) {
+        CUSTOM_ERROR("Scaler must be fitted before use");
+        return;
+    }
+
+    int n = 0;
+    for (int j = scaler->col_start; j < scaler->col_end; j++) {
+        for (int i = 0; i < X->rows; i++) {
+            double new_val = 0;
+            const double x = matrix_get(X, i, j);
+            switch (scaler->type) {
+                case MIN_MAX_NORMALIZATION: {
+                    const double max = scaler->params1[n];
+                    const double min = scaler->params2[n];
+                    new_val = x * (max - min) + min;
+                    break;
+                }
+                case MEAN_NORMALIZATION: {
+                    const double mean = scaler->params1[n];
+                    const double diff = scaler->params2[n];
+                    new_val = x * diff + mean;
+                    break;
+                }
+                case STANDARDIZATION: {
+                    const double mean = scaler->params1[n];
+                    const double std = scaler->params2[n];
+                    new_val = x * std + mean;
+                    break;
+                }
+                default: {
+                    CUSTOM_ERROR("Invalid scaler type");
+                    return;
+                }
+            }
+            matrix_set(X, i, j, new_val);
+        }
+        n++;
     }
 }

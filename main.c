@@ -7,9 +7,13 @@
 
 int main() {
     Matrix *A = read_csv("test_data.csv", ',', 0);
-    Scaler *scaler = scaler_create(MEAN_NORMALIZATION, 0, A->cols);
+    matrix_print(A);
+    printf("\n\n");
+    Scaler *scaler = scaler_create(STANDARDIZATION, 0, A->cols);
     scaler_fit_transform(scaler, A);
     matrix_print(A);
-    printf("%lf", matrix_get(A, 5, 2));
+    printf("\n\n");
+    scaler_inverse_transform(scaler, A);
+    matrix_print(A);
     return 0;
 }
