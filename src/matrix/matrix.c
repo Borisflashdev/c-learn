@@ -573,6 +573,7 @@ double matrix_col_min(const Matrix *X, const int col) {
 
     return min;
 }
+
 double matrix_col_max(const Matrix *X, const int col) {
     if (!X) {
         NULL_MATRIX_ERROR();
@@ -712,4 +713,52 @@ void matrix_apply_col(const Matrix *X, const int col, double (*func)(double)) {
     for (int i = 0; i < X->rows; i++) {
         X->data[i * stride + col] = func(X->data[i * stride + col]);
     }
+}
+
+Matrix *vector_to_matrix(const Vector *x) {
+    if (!x) {
+        NULL_VECTOR_ERROR();
+        return NULL;
+    }
+
+    Matrix *X = matrix_create(x->dim, 1);
+    if (!X) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+
+    for (int i = 0; i < x->dim; i++) {
+        X->data[i] = x->data[i];
+    }
+
+    return X;
+}
+
+Vector *matrix_col_to_vector(const Matrix *X, const int col) {
+    if (!X) {
+        NULL_MATRIX_ERROR();
+        return NULL;
+    }
+    if (col < 0 || col >= X->cols) {
+        INDEX_ERROR();
+        return NULL;
+    }
+
+    Vector* x = vector_create(X->rows);
+    if (!x) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+
+    Matrix *X_col = matrix_slice_cols(X, col, col+1);
+    if (!X_col) {
+        ALLOCATION_ERROR();
+        vector_free(x);
+        return NULL;
+    }
+
+    memcpy(x->data, X_col->data, sizeof(double) * x->dim);
+    matrix_free(X_col);
+
+    return x;
 }
