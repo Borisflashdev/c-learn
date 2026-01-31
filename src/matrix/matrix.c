@@ -250,10 +250,13 @@ double matrix_size(const Matrix *X) {
     return X->rows*X->cols;
 }
 
-Matrix *matrix_transpose(const Matrix *X) {
+Matrix *matrix_transpose(Matrix *X, const int inplace) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return NULL;
+    }
+    if (inplace != 0 && inplace != 1) {
+        CUSTOM_ERROR("Property 'inplace' must be 0 or 1");
     }
 
     Matrix* transposed_matrix = matrix_create(X->cols, X->rows);
@@ -266,6 +269,10 @@ Matrix *matrix_transpose(const Matrix *X) {
         for (int j = 0; j < X->cols; j++) {
             transposed_matrix->data[j * transposed_matrix->cols + i] =X->data[i * X->cols + j];
         }
+    }
+
+    if (inplace == 1) {
+        matrix_free(X);
     }
 
     return transposed_matrix;
@@ -734,7 +741,7 @@ Matrix *vector_to_matrix(const Vector *x) {
     return X;
 }
 
-Vector *matrix_col_to_vector(const Matrix *X, const int col) {
+Vector *matrix_to_vector(const Matrix *X, const int col) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return NULL;
@@ -750,15 +757,9 @@ Vector *matrix_col_to_vector(const Matrix *X, const int col) {
         return NULL;
     }
 
-    Matrix *X_col = matrix_slice_cols(X, col, col+1);
-    if (!X_col) {
-        ALLOCATION_ERROR();
-        vector_free(x);
-        return NULL;
+    for (int i = 0; i < X->rows; i++) {
+        x->data[i] = X->data[i * X->cols + col];
     }
-
-    memcpy(x->data, X_col->data, sizeof(double) * x->dim);
-    matrix_free(X_col);
 
     return x;
 }

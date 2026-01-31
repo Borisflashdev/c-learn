@@ -97,7 +97,7 @@ void vector_print(const Vector *x) {
     free(buf);
 }
 
-void vector_print_head(const Vector *x, int num) {
+void vector_print_head(const Vector *x, const int num) {
     if (!x) {
         NULL_VECTOR_ERROR();
         return;
@@ -141,7 +141,7 @@ void vector_print_tail(const Vector *x, const int num) {
     printf("]\n");
 }
 
-Vector *vector_arithmetic(const Vector *x, const Vector *y, char op) {
+Vector *vector_arithmetic(const Vector *x, const Vector *y, const char op) {
     if (!x || !y) {
         NULL_VECTOR_ERROR();
         return NULL;
@@ -194,7 +194,7 @@ Vector *vector_arithmetic(const Vector *x, const Vector *y, char op) {
     return z;
 }
 
-void vector_scalar_arithmetic(const Vector *x, double scalar, char op) {
+void vector_scalar_arithmetic(const Vector *x, const double scalar, const char op) {
     if (!x) {
         NULL_VECTOR_ERROR();
         return;
@@ -278,7 +278,7 @@ double vector_mean(const Vector *x) {
     return vector_sum(x) / x->dim;
 }
 
-double vector_std(const Vector *x, int ddof) {
+double vector_std(const Vector *x, const int ddof) {
     if (!x) {
         NULL_VECTOR_ERROR();
         return 0;
@@ -289,11 +289,11 @@ double vector_std(const Vector *x, int ddof) {
     }
 
     const int n = x->dim;
-    double mean = vector_mean(x);
+    const double mean = vector_mean(x);
 
     double var = 0;
     for (int i = 0; i < n; i++) {
-        double diff = x->data[i] - mean;
+        const double diff = x->data[i] - mean;
         var += diff * diff;
     }
 
