@@ -17,7 +17,7 @@ Matrix *matrix_copy(const Matrix *X);
 void matrix_free(Matrix *X);
 
 double matrix_get(const Matrix *X, int i, int j);
-void matrix_set(const Matrix *X, int i, int j, double value);
+void matrix_set(Matrix *X, int i, int j, double value);
 
 Matrix *read_csv(const char *path, char separator, int has_header);
 void matrix_print(const Matrix *X);
@@ -35,7 +35,7 @@ Matrix *matrix_concat(const Matrix *A, const Matrix *B);
 
 Matrix *matrix_arithmetic(const Matrix *A, const Matrix *B, char op);
 Matrix *matrix_multiplication(const Matrix *A, const Matrix *B);
-void matrix_scalar_arithmetic(const Matrix *X, double scalar, char op);
+void matrix_scalar_arithmetic(Matrix *X, double scalar, char op);
 
 double matrix_min(const Matrix *X);
 double matrix_max(const Matrix *X);
@@ -48,7 +48,7 @@ double matrix_col_sum(const Matrix *X, int col);
 double matrix_col_mean(const Matrix *X, int col);
 double matrix_col_std(const Matrix *X, int col, int ddof);
 double matrix_col_dot_product(const Matrix *A, int col_A, const Matrix *B, int col_B);
-void matrix_apply_col(const Matrix *X, int col, double (*func)(double));
+void matrix_apply_col(Matrix *X, int col, double (*func)(double));
 
 Matrix *vector_to_matrix(const Vector *x);
 Vector *matrix_to_vector(const Matrix *X, int col);

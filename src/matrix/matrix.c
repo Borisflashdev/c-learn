@@ -59,7 +59,7 @@ double matrix_get(const Matrix *X, const int i, const int j) {
     return X->data[i * X->cols + j];
 }
 
-void matrix_set(const Matrix *X, const int i, const int j, const double value) {
+void matrix_set(Matrix *X, const int i, const int j, const double value) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return;
@@ -463,7 +463,7 @@ Matrix *matrix_multiplication(const Matrix *A, const Matrix *B) {
     return C;
 }
 
-void matrix_scalar_arithmetic(const Matrix *X, const double scalar, const char op) {
+void matrix_scalar_arithmetic(Matrix *X, const double scalar, const char op) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return;
@@ -702,7 +702,7 @@ double matrix_col_dot_product(const Matrix *A, const int col_A, const Matrix *B,
     return sum;
 }
 
-void matrix_apply_col(const Matrix *X, const int col, double (*func)(double)) {
+void matrix_apply_col(Matrix *X, const int col, double (*func)(double)) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return;

@@ -60,7 +60,7 @@ double vector_get(const Vector *x, const int i) {
     return x->data[i];
 }
 
-void vector_set(const Vector *x, const int i, const double value) {
+void vector_set(Vector *x, const int i, const double value) {
     if (!x) {
         NULL_VECTOR_ERROR();
         return;
@@ -194,7 +194,7 @@ Vector *vector_arithmetic(const Vector *x, const Vector *y, const char op) {
     return z;
 }
 
-void vector_scalar_arithmetic(const Vector *x, const double scalar, const char op) {
+void vector_scalar_arithmetic(Vector *x, const double scalar, const char op) {
     if (!x) {
         NULL_VECTOR_ERROR();
         return;
@@ -323,7 +323,7 @@ double vector_dot_product(const Vector *x, const Vector *y) {
     return sum;
 }
 
-void vector_apply(const Vector *x, double (*func)(double)) {
+void vector_apply(Vector *x, double (*func)(double)) {
     if (!x) {
         NULL_VECTOR_ERROR();
         return;
@@ -333,6 +333,7 @@ void vector_apply(const Vector *x, double (*func)(double)) {
         return;
     }
 
-    for (int i = 0; i < x->dim; i++)
+    for (int i = 0; i < x->dim; i++) {
         x->data[i] = func(x->data[i]);
+    }
 }
