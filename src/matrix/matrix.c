@@ -59,7 +59,7 @@ double matrix_get(const Matrix *X, const int i, const int j) {
     return X->data[i * X->cols + j];
 }
 
-void matrix_set(const Matrix *X, const int i, const int j, const double value) {
+void matrix_set(Matrix *X, const int i, const int j, const double value) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return;
@@ -250,10 +250,13 @@ double matrix_size(const Matrix *X) {
     return X->rows*X->cols;
 }
 
-Matrix *matrix_transpose(const Matrix *X) {
+Matrix *matrix_transpose(Matrix *X, const int inplace) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return NULL;
+    }
+    if (inplace != 0 && inplace != 1) {
+        CUSTOM_ERROR("Property 'inplace' must be 0 or 1");
     }
 
     Matrix* transposed_matrix = matrix_create(X->cols, X->rows);
@@ -266,6 +269,10 @@ Matrix *matrix_transpose(const Matrix *X) {
         for (int j = 0; j < X->cols; j++) {
             transposed_matrix->data[j * transposed_matrix->cols + i] =X->data[i * X->cols + j];
         }
+    }
+
+    if (inplace == 1) {
+        matrix_free(X);
     }
 
     return transposed_matrix;
@@ -456,7 +463,7 @@ Matrix *matrix_multiplication(const Matrix *A, const Matrix *B) {
     return C;
 }
 
-void matrix_scalar_arithmetic(const Matrix *X, const double scalar, const char op) {
+void matrix_scalar_arithmetic(Matrix *X, const double scalar, const char op) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return;
@@ -573,6 +580,7 @@ double matrix_col_min(const Matrix *X, const int col) {
 
     return min;
 }
+
 double matrix_col_max(const Matrix *X, const int col) {
     if (!X) {
         NULL_MATRIX_ERROR();
@@ -694,7 +702,7 @@ double matrix_col_dot_product(const Matrix *A, const int col_A, const Matrix *B,
     return sum;
 }
 
-void matrix_apply_col(const Matrix *X, const int col, double (*func)(double)) {
+void matrix_apply_col(Matrix *X, const int col, double (*func)(double)) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return;
@@ -712,4 +720,46 @@ void matrix_apply_col(const Matrix *X, const int col, double (*func)(double)) {
     for (int i = 0; i < X->rows; i++) {
         X->data[i * stride + col] = func(X->data[i * stride + col]);
     }
+}
+
+Matrix *vector_to_matrix(const Vector *x) {
+    if (!x) {
+        NULL_VECTOR_ERROR();
+        return NULL;
+    }
+
+    Matrix *X = matrix_create(x->dim, 1);
+    if (!X) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+
+    for (int i = 0; i < x->dim; i++) {
+        X->data[i] = x->data[i];
+    }
+
+    return X;
+}
+
+Vector *matrix_to_vector(const Matrix *X, const int col) {
+    if (!X) {
+        NULL_MATRIX_ERROR();
+        return NULL;
+    }
+    if (col < 0 || col >= X->cols) {
+        INDEX_ERROR();
+        return NULL;
+    }
+
+    Vector* x = vector_create(X->rows);
+    if (!x) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+
+    for (int i = 0; i < X->rows; i++) {
+        x->data[i] = X->data[i * X->cols + col];
+    }
+
+    return x;
 }
