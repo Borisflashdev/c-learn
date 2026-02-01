@@ -67,31 +67,31 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y) {
         matrix_free(X_1);
     }
 
-    Matrix *y_matrix = vector_to_matrix(y);
-    Matrix *X_T = matrix_transpose(X_use, 0);
-    Matrix *X_T_X = matrix_multiplication(X_T, X_use);
-    Matrix *X_T_X_inverse = matrix_inverse(X_T_X, 0);
-    Matrix *X_T_X_inverse_X_T = matrix_multiplication(X_T_X_inverse, X_T);
-    Matrix *w_matrix = matrix_multiplication(X_T_X_inverse_X_T, y_matrix);
+    Matrix *y_mat = vector_to_matrix(y);
+    Matrix *Xt = matrix_transpose(X_use, 0);
+    Matrix *XtX = matrix_multiplication(Xt, X_use);
+    Matrix *XtX_inv = matrix_inverse(XtX, 0);
+    Matrix *XtX_inv_Xt = matrix_multiplication(XtX_inv, Xt);
+    Matrix *w_mat = matrix_multiplication(XtX_inv_Xt, y_mat);
 
     if (model->fit_intercept == 0) {
-        for (int i = 0; i < w_matrix->rows; i++) {
-            vector_set(model->coef_, i, matrix_get(w_matrix, i, 0));
+        for (int i = 0; i < w_mat->rows; i++) {
+            vector_set(model->coef_, i, matrix_get(w_mat, i, 0));
         }
     } else {
-        model->intercept_ = matrix_get(w_matrix, 0, 0);
-        for (int i = 1; i < w_matrix->rows; i++) {
-            vector_set(model->coef_, i-1, matrix_get(w_matrix, i, 0));
+        model->intercept_ = matrix_get(w_mat, 0, 0);
+        for (int i = 1; i < w_mat->rows; i++) {
+            vector_set(model->coef_, i-1, matrix_get(w_mat, i, 0));
         }
     }
 
     matrix_free(X_use);
-    matrix_free(y_matrix);
-    matrix_free(X_T);
-    matrix_free(X_T_X);
-    matrix_free(X_T_X_inverse);
-    matrix_free(X_T_X_inverse_X_T);
-    matrix_free(w_matrix);
+    matrix_free(y_mat);
+    matrix_free(Xt);
+    matrix_free(XtX);
+    matrix_free(XtX_inv);
+    matrix_free(XtX_inv_Xt);
+    matrix_free(w_mat);
 }
 
 Vector *linear_regression_predict(LinearRegression *model, Matrix *X) {
@@ -104,11 +104,11 @@ Vector *linear_regression_predict(LinearRegression *model, Matrix *X) {
         return NULL;
     }
 
-    Matrix *w = vector_to_matrix(model->coef_);
-    Matrix *y_hat = matrix_multiplication(X, w);
+    Matrix *w_mat = vector_to_matrix(model->coef_);
+    Matrix *y_hat = matrix_multiplication(X, w_mat);
     Vector *res = matrix_to_vector(y_hat, 0, 0, y_hat->rows);
 
-    matrix_free(w);
+    matrix_free(w_mat);
     matrix_free(y_hat);
     if (model->fit_intercept == 0) {
         return res;
