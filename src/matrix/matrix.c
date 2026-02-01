@@ -278,6 +278,97 @@ Matrix *matrix_transpose(Matrix *X, const int inplace) {
     return transposed_matrix;
 }
 
+Matrix *matrix_inverse(Matrix *X, const int inplace) {
+    if (!X) {
+        NULL_MATRIX_ERROR();
+        return NULL;
+    }
+    if (X->rows != X->cols) {
+        CUSTOM_ERROR("Matrix must be square to invert");
+        return NULL;
+    }
+    if (inplace != 0 && inplace != 1) {
+        CUSTOM_ERROR("Property 'inplace' must be 0 or 1");
+    }
+
+    const int n = X->rows;
+
+    Matrix *A = matrix_create(n, n);
+    if (!A) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+    Matrix *I = matrix_create(n, n);
+    if (!I) {
+        ALLOCATION_ERROR();
+        matrix_free(A);
+        return NULL;
+    }
+
+    for (int r = 0; r < n; r++) {
+        for (int c = 0; c < n; c++) {
+            A->data[r * n + c] = X->data[r * n + c];
+            I->data[r * n + c] = (r == c) ? 1.0 : 0.0;
+        }
+    }
+
+    for (int col = 0; col < n; col++) {
+
+        int pivot = col;
+        double max_val = fabs(A->data[col * n + col]);
+
+        for (int r = col + 1; r < n; r++) {
+            const double val = fabs(A->data[r * n + col]);
+            if (val > max_val) {
+                max_val = val;
+                pivot = r;
+            }
+        }
+
+        if (max_val < 1e-12) {
+            CUSTOM_ERROR("Matrix is singular (not invertible)");
+            matrix_free(A);
+            matrix_free(I);
+            return NULL;
+        }
+
+        if (pivot != col) {
+            for (int c = 0; c < n; c++) {
+                double tmp = A->data[col * n + c];
+                A->data[col * n + c] = A->data[pivot * n + c];
+                A->data[pivot * n + c] = tmp;
+
+                tmp = I->data[col * n + c];
+                I->data[col * n + c] = I->data[pivot * n + c];
+                I->data[pivot * n + c] = tmp;
+            }
+        }
+
+        const double pivot_val = A->data[col * n + col];
+        for (int c = 0; c < n; c++) {
+            A->data[col * n + c] /= pivot_val;
+            I->data[col * n + c] /= pivot_val;
+        }
+
+        for (int r = 0; r < n; r++) {
+            if (r == col) continue;
+
+            const double factor = A->data[r * n + col];
+
+            for (int c = 0; c < n; c++) {
+                A->data[r * n + c] -= factor * A->data[col * n + c];
+                I->data[r * n + c] -= factor * I->data[col * n + c];
+            }
+        }
+    }
+
+    matrix_free(A);
+    if (inplace == 1) {
+        matrix_free(X);
+    }
+    return I;
+}
+
 Matrix *matrix_slice(const Matrix *X, const int i_start, const int i_end, const int j_start, const int j_end) {
     if (!X) {
         NULL_MATRIX_ERROR();

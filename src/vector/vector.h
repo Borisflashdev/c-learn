@@ -1,5 +1,5 @@
-﻿#ifndef VECTOR
-#define VECTOR
+﻿#ifndef VECTOR_H
+#define VECTOR_H
 
 #include "../errors/errors.h"
 
