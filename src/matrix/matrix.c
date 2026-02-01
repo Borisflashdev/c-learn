@@ -832,24 +832,28 @@ Matrix *vector_to_matrix(const Vector *x) {
     return X;
 }
 
-Vector *matrix_to_vector(const Matrix *X, const int col) {
+Vector *matrix_to_vector(const Matrix *X, const int col, const int row_start, const int row_end) {
     if (!X) {
         NULL_MATRIX_ERROR();
         return NULL;
     }
-    if (col < 0 || col >= X->cols) {
+    if (col < 0 || col > X->cols) {
+        INDEX_ERROR();
+        return NULL;
+    }
+    if (row_start < 0 || row_end > X->rows || row_start > row_end) {
         INDEX_ERROR();
         return NULL;
     }
 
-    Vector* x = vector_create(X->rows);
+    Vector* x = vector_create(row_end - row_start);
     if (!x) {
         ALLOCATION_ERROR();
         return NULL;
     }
 
-    for (int i = 0; i < X->rows; i++) {
-        x->data[i] = X->data[i * X->cols + col];
+    for (int i = 0; i < row_end - row_start; i++) {
+        x->data[i] = X->data[(row_start + i) * X->cols + col];
     }
 
     return x;

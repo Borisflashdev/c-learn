@@ -106,7 +106,7 @@ Vector *linear_regression_predict(LinearRegression *model, Matrix *X) {
 
     Matrix *w = vector_to_matrix(model->coef_);
     Matrix *y_hat = matrix_multiplication(X, w);
-    Vector *res = matrix_to_vector(y_hat, 0);
+    Vector *res = matrix_to_vector(y_hat, 0, 0, y_hat->rows);
 
     matrix_free(w);
     matrix_free(y_hat);

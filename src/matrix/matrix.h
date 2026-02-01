@@ -52,6 +52,6 @@ double matrix_col_dot_product(const Matrix *A, int col_A, const Matrix *B, int c
 void matrix_apply_col(Matrix *X, int col, double (*func)(double));
 
 Matrix *vector_to_matrix(const Vector *x);
-Vector *matrix_to_vector(const Matrix *X, int col);
+Vector *matrix_to_vector(const Matrix *X, int col, int row_start, int row_end);
 
 #endif
