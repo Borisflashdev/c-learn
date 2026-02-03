@@ -8,15 +8,24 @@
 
 int main() {
     // Import DataFrame
-    Matrix *df = read_csv("test_data.csv", ',', 0);
+    Matrix *df = read_csv("apartment_prices.csv", ',', 0);
 
-    Matrix *test = matrix_slice(df, 15, df->rows, 0, df->cols-1);
-    Matrix *X = matrix_slice(df, 0, 15, 0, df->cols-1);
-    Vector *y = matrix_to_vector(df, X->cols, 0, 15);
+    Matrix *X = matrix_slice_cols(df, 0, df->cols-1);
+    Vector *y = matrix_to_vector(df, df->cols-1, 0, df->rows);
+
+    Scaler *scaler = scaler_create(MIN_MAX_NORMALIZATION, 0, 1);
+    scaler_fit_transform(scaler, X);
+    matrix_print(X);
 
     LinearRegression *model = linear_regression_create(X->cols, 1);
     linear_regression_fit(model, X, y);
-    Vector *prediction = linear_regression_predict(model, test);
+
+    Matrix *my_data = read_csv("my_apartment.csv", ',', 0);
+    scaler_transform(scaler, my_data);
+    matrix_print(my_data);
+
+    Vector *prediction = linear_regression_predict(model, my_data);
+    vector_print(prediction);
 
     return 0;
 }
