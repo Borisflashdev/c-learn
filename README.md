@@ -1,6 +1,6 @@
 # C Learn
 
-<img src="logo.png" alt="Logo" width="100">
+<img src="logo.png" alt="Logo" width="100"> 
 
 C Learn is a machine learning framework written in pure C. It implements core ML algorithms and basic data preprocessing from scratch, using only the C standard library and no external dependencies.
 
