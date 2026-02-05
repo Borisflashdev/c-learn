@@ -28,6 +28,7 @@ void matrix_shape(const Matrix *X);
 double matrix_size(const Matrix *X);
 
 Matrix *matrix_transpose(Matrix *X, int inplace);
+Matrix *matrix_inverse(Matrix *X, int inplace);
 Matrix *matrix_slice(const Matrix *X, int i_start, int i_end, int j_start, int j_end);
 Matrix *matrix_slice_rows(const Matrix *X, int start, int end);
 Matrix *matrix_slice_cols(const Matrix *X, int start, int end);
@@ -51,6 +52,6 @@ double matrix_col_dot_product(const Matrix *A, int col_A, const Matrix *B, int c
 void matrix_apply_col(Matrix *X, int col, double (*func)(double));
 
 Matrix *vector_to_matrix(const Vector *x);
-Vector *matrix_to_vector(const Matrix *X, int col);
+Vector *matrix_to_vector(const Matrix *X, int col, int row_start, int row_end);
 
 #endif

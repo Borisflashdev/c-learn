@@ -2,32 +2,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "src/linear_regression/linear_regression.h"
 #include "src/matrix/matrix.h"
 #include "src/scaler/scaler.h"
 
 int main() {
     // Import DataFrame
-    Matrix *df = read_csv("test_data.csv", ',', 0);
+    Matrix *df = read_csv("apartment_prices.csv", ',', 0);
 
-    // Split DataFrame in train and test
-    Matrix *train = matrix_slice_rows(df, 0, 15);
-    Matrix *test = matrix_slice_rows(df, 15, df->rows);
+    Matrix *X = matrix_slice_cols(df, 0, df->cols-1);
+    Vector *y = matrix_to_vector(df, df->cols-1, 0, df->rows);
 
-    // Split train into features and target
-    Matrix *X_train = matrix_slice_cols(train, 0, train->cols-1);
-    Vector *y_train = matrix_to_vector(train, train->cols-1);
+    Scaler *scaler = scaler_create(MIN_MAX_NORMALIZATION, 0, 1);
+    scaler_fit_transform(scaler, X);
+    matrix_print(X);
 
-    // Split test into features and target
-    Matrix *X_test = matrix_slice_cols(test, 0, test->cols-1);
-    Vector *y_test = matrix_to_vector(test, test->cols-1);
+    LinearRegression *model = linear_regression_create(X->cols, 1, 0);
+    linear_regression_fit(model, X, y);
 
-    // Free all
-    matrix_free(df);
-    matrix_free(train);
-    matrix_free(test);
-    matrix_free(X_train);
-    matrix_free(X_test);
-    vector_free(y_train);
-    vector_free(y_test);
+    Matrix *my_data = read_csv("my_apartment.csv", ',', 0);
+    scaler_transform(scaler, my_data);
+    matrix_print(my_data);
+
+    Vector *prediction = linear_regression_predict(model, my_data);
+    vector_print(prediction);
+
     return 0;
 }
