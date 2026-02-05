@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-LinearRegression *linear_regression_create(const int number_of_features, const int fit_intercept) {
+LinearRegression *linear_regression_create(const int number_of_features, const int fit_intercept, const double l2_lambda) {
     if (number_of_features < 1) {
         INDEX_ERROR();
         return NULL;
@@ -19,7 +19,8 @@ LinearRegression *linear_regression_create(const int number_of_features, const i
         return NULL;
     }
     lr->intercept_ = 0;
-    lr->number_of_features_ = number_of_features;
+    lr->number_of_features = number_of_features;
+    lr->l2_lambda_ = l2_lambda;
     lr->fit_intercept = fit_intercept;
 
     return lr;
@@ -50,7 +51,7 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y) {
         NULL_VECTOR_ERROR();
         return;
     }
-    if (X->rows != y->dim || X->cols != model->number_of_features_) {
+    if (X->rows != y->dim || X->cols != model->number_of_features) {
         CUSTOM_ERROR("Dimension mismatch");
         return;
     }
@@ -67,10 +68,24 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y) {
         matrix_free(X_1);
     }
 
+    Matrix *lambda_I = matrix_create(X_use->cols, X_use->cols);
+    if (!lambda_I) {
+        NULL_MATRIX_ERROR();
+        return;
+    }
+    for (int i = 0; i < lambda_I->cols; i++) {
+        lambda_I->data[i * lambda_I->cols + i] = model->l2_lambda_;
+    }
+
+    if (model->fit_intercept == 1) {
+        matrix_set(lambda_I, 0, 0, 0);
+    }
+
     Matrix *y_mat = vector_to_matrix(y);
     Matrix *Xt = matrix_transpose(X_use, 0);
     Matrix *XtX = matrix_multiplication(Xt, X_use);
-    Matrix *XtX_inv = matrix_inverse(XtX, 0);
+    Matrix *XtX_lambda = matrix_arithmetic(XtX, lambda_I, '+');
+    Matrix *XtX_inv = matrix_inverse(XtX_lambda, 0);
     Matrix *XtX_inv_Xt = matrix_multiplication(XtX_inv, Xt);
     Matrix *w_mat = matrix_multiplication(XtX_inv_Xt, y_mat);
 
@@ -86,6 +101,7 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y) {
     }
 
     matrix_free(X_use);
+    matrix_free(lambda_I);
     matrix_free(y_mat);
     matrix_free(Xt);
     matrix_free(XtX);

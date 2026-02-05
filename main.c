@@ -17,7 +17,7 @@ int main() {
     scaler_fit_transform(scaler, X);
     matrix_print(X);
 
-    LinearRegression *model = linear_regression_create(X->cols, 1);
+    LinearRegression *model = linear_regression_create(X->cols, 1, 0);
     linear_regression_fit(model, X, y);
 
     Matrix *my_data = read_csv("my_apartment.csv", ',', 0);
