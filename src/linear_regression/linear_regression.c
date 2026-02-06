@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-LinearRegression *linear_regression_create(const int number_of_features, const int fit_intercept, const double l2_lambda) {
+LinearRegression *linear_regression_create(const int number_of_features, const int fit_intercept) {
     if (number_of_features < 1) {
         INDEX_ERROR();
         return NULL;
@@ -13,15 +13,15 @@ LinearRegression *linear_regression_create(const int number_of_features, const i
     }
 
     LinearRegression *lr = malloc(sizeof(LinearRegression));
-    lr->coef_ = vector_create(number_of_features);
-    if (!lr->coef_) {
+    lr->coef = vector_create(number_of_features);
+    if (!lr->coef) {
         ALLOCATION_ERROR();
         return NULL;
     }
-    lr->intercept_ = 0;
-    lr->number_of_features = number_of_features;
-    lr->l2_lambda_ = l2_lambda;
+    lr->intercept = 0;
+    lr->lambda = 0;
     lr->fit_intercept = fit_intercept;
+    lr->number_of_features = number_of_features;
 
     return lr;
 }
@@ -32,13 +32,13 @@ void linear_regression_free(LinearRegression *linear_regression) {
         return;
     }
 
-    if (linear_regression->coef_) {
-        vector_free(linear_regression->coef_);
+    if (linear_regression->coef) {
+        vector_free(linear_regression->coef);
     }
     free(linear_regression);
 }
 
-void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y) {
+void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const double lambda) {
     if (!model) {
         NULL_LINEAR_REGRESSION_ERROR();
         return;
@@ -74,7 +74,7 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y) {
         return;
     }
     for (int i = 0; i < lambda_I->cols; i++) {
-        lambda_I->data[i * lambda_I->cols + i] = model->l2_lambda_;
+        lambda_I->data[i * lambda_I->cols + i] = lambda;
     }
 
     if (model->fit_intercept == 1) {
@@ -91,12 +91,12 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y) {
 
     if (model->fit_intercept == 0) {
         for (int i = 0; i < w_mat->rows; i++) {
-            vector_set(model->coef_, i, matrix_get(w_mat, i, 0));
+            vector_set(model->coef, i, matrix_get(w_mat, i, 0));
         }
     } else {
-        model->intercept_ = matrix_get(w_mat, 0, 0);
+        model->intercept = matrix_get(w_mat, 0, 0);
         for (int i = 1; i < w_mat->rows; i++) {
-            vector_set(model->coef_, i-1, matrix_get(w_mat, i, 0));
+            vector_set(model->coef, i-1, matrix_get(w_mat, i, 0));
         }
     }
 
@@ -120,7 +120,7 @@ Vector *linear_regression_predict(LinearRegression *model, Matrix *X) {
         return NULL;
     }
 
-    Matrix *w_mat = vector_to_matrix(model->coef_);
+    Matrix *w_mat = vector_to_matrix(model->coef);
     Matrix *y_hat = matrix_multiplication(X, w_mat);
     Vector *res = matrix_to_vector(y_hat, 0, 0, y_hat->rows);
 
@@ -131,7 +131,7 @@ Vector *linear_regression_predict(LinearRegression *model, Matrix *X) {
     }
 
     for (int i = 0; i < res->dim; i++) {
-        res->data[i] += model->intercept_;
+        res->data[i] += model->intercept;
     }
     return res;
 }

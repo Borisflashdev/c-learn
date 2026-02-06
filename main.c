@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "src/gdregression/bgdregression.h"
 #include "src/linear_regression/linear_regression.h"
 #include "src/matrix/matrix.h"
 #include "src/scaler/scaler.h"
@@ -15,14 +16,12 @@ int main() {
 
     Scaler *scaler = scaler_create(MIN_MAX_NORMALIZATION, 0, 1);
     scaler_fit_transform(scaler, X);
-    matrix_print(X);
 
-    LinearRegression *model = linear_regression_create(X->cols, 1, 0);
-    linear_regression_fit(model, X, y);
+    LinearRegression *model = linear_regression_create(X->cols, 1);
+    linear_regression_fit(model, X, y, 0);
 
     Matrix *my_data = read_csv("my_apartment.csv", ',', 0);
     scaler_transform(scaler, my_data);
-    matrix_print(my_data);
 
     Vector *prediction = linear_regression_predict(model, my_data);
     vector_print(prediction);
