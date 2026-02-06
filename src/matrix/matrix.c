@@ -18,6 +18,11 @@ Matrix *matrix_create(const int rows, const int cols) {
     X->rows = rows;
     X->cols = cols;
     X->data = calloc(rows * cols, sizeof(double));
+    if (!X->data) {
+        ALLOCATION_ERROR();
+        matrix_free(X);
+        return NULL;
+    }
 
     return X;
 }
@@ -50,11 +55,11 @@ void matrix_free(Matrix *X) {
 double matrix_get(const Matrix *X, const int i, const int j) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
         INDEX_ERROR();
-        return 0;
+        return NAN;
     }
     return X->data[i * X->cols + j];
 }
@@ -244,7 +249,7 @@ void matrix_shape(const Matrix *X) {
 double matrix_size(const Matrix *X) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
 
     return X->rows*X->cols;
@@ -257,6 +262,7 @@ Matrix *matrix_transpose(Matrix *X, const int inplace) {
     }
     if (inplace != 0 && inplace != 1) {
         CUSTOM_ERROR("Property 'inplace' must be 0 or 1");
+        return NULL;
     }
 
     Matrix* transposed_matrix = matrix_create(X->cols, X->rows);
@@ -289,6 +295,7 @@ Matrix *matrix_inverse(Matrix *X, const int inplace) {
     }
     if (inplace != 0 && inplace != 1) {
         CUSTOM_ERROR("Property 'inplace' must be 0 or 1");
+        return NULL;
     }
 
     const int n = X->rows;
@@ -308,7 +315,7 @@ Matrix *matrix_inverse(Matrix *X, const int inplace) {
     for (int r = 0; r < n; r++) {
         for (int c = 0; c < n; c++) {
             A->data[r * n + c] = X->data[r * n + c];
-            I->data[r * n + c] = (r == c) ? 1.0 : 0.0;
+            I->data[r * n + c] = r == c ? 1.0 : 0.0;
         }
     }
 
@@ -590,7 +597,7 @@ void matrix_scalar_arithmetic(Matrix *X, const double scalar, const char op) {
 double matrix_min(const Matrix *X) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
 
     const int size = X->rows * X->cols;
@@ -607,7 +614,7 @@ double matrix_min(const Matrix *X) {
 double matrix_max(const Matrix *X) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
 
     const int size = X->rows * X->cols;
@@ -624,7 +631,7 @@ double matrix_max(const Matrix *X) {
 double matrix_sum(const Matrix *X) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
 
     double sum=0;
@@ -639,7 +646,7 @@ double matrix_sum(const Matrix *X) {
 double matrix_mean(const Matrix *X) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
 
     double sum = 0;
@@ -654,11 +661,11 @@ double matrix_mean(const Matrix *X) {
 double matrix_col_min(const Matrix *X, const int col) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
     if (col < 0 || col >= X->cols) {
         INDEX_ERROR();
-        return 0;
+        return NAN;
     }
 
     const int n = X->rows;
@@ -675,11 +682,11 @@ double matrix_col_min(const Matrix *X, const int col) {
 double matrix_col_max(const Matrix *X, const int col) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
     if (col < 0 || col >= X->cols) {
         INDEX_ERROR();
-        return 0;
+        return NAN;
     }
 
     const int n = X->rows;
@@ -696,11 +703,11 @@ double matrix_col_max(const Matrix *X, const int col) {
 double matrix_col_sum(const Matrix *X, const int col) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
     if (col < 0 || col >= X->cols) {
         INDEX_ERROR();
-        return 0;
+        return NAN;
     }
 
     double sum = 0;
@@ -715,11 +722,11 @@ double matrix_col_sum(const Matrix *X, const int col) {
 double matrix_col_mean(const Matrix *X, const int col) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
     if (col < 0 || col >= X->cols) {
         INDEX_ERROR();
-        return 0;
+        return NAN;
     }
 
     double sum = 0;
@@ -734,14 +741,15 @@ double matrix_col_mean(const Matrix *X, const int col) {
 double matrix_col_std(const Matrix *X, const int col, const int ddof) {
     if (!X) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
     if (col < 0 || col >= X->cols) {
         INDEX_ERROR();
-        return 0;
+        return NAN;
     }
     if (ddof != 0 && ddof != 1) {
         CUSTOM_ERROR("Property 'ddof' must be 0 or 1");
+        return NAN;
     }
 
     const int n = X->rows;
@@ -770,15 +778,15 @@ double matrix_col_std(const Matrix *X, const int col, const int ddof) {
 double matrix_col_dot_product(const Matrix *A, const int col_A, const Matrix *B, const int col_B) {
     if (!A || !B) {
         NULL_ERROR("Matrix");
-        return 0;
+        return NAN;
     }
     if (A->rows != B->rows) {
         CUSTOM_ERROR("Row dimensions must match for dot product");
-        return 0;
+        return NAN;
     }
     if (col_A < 0 || col_A >= A->cols || col_B < 0 || col_B >= B->cols) {
         INDEX_ERROR();
-        return 0;
+        return NAN;
 }
 
     double sum = 0;
@@ -837,7 +845,7 @@ Vector *matrix_to_vector(const Matrix *X, const int col, const int row_start, co
         NULL_ERROR("Matrix");
         return NULL;
     }
-    if (col < 0 || col > X->cols) {
+    if (col < 0 || col >= X->cols) {
         INDEX_ERROR();
         return NULL;
     }

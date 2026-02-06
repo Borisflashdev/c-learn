@@ -19,6 +19,11 @@ Vector *vector_create(const int dim) {
 
     x->dim = dim;
     x->data = calloc(dim, sizeof(double));
+    if (!x->data) {
+        ALLOCATION_ERROR();
+        vector_free(x);
+        return NULL;
+    }
 
     return x;
 }
@@ -51,11 +56,11 @@ void vector_free(Vector *x) {
 double vector_get(const Vector *x, const int i) {
     if (!x) {
         NULL_ERROR("Vector");
-        return 0;
+        return NAN;
     }
     if (i < 0 || i >= x->dim) {
         INDEX_ERROR();
-        return 0;
+        return NAN;
     }
     return x->data[i];
 }
@@ -233,7 +238,7 @@ void vector_scalar_arithmetic(Vector *x, const double scalar, const char op) {
 double vector_min(const Vector *x) {
     if (!x) {
         NULL_ERROR("Vector");
-        return 0;
+        return NAN;
     }
 
     double min = x->data[0];
@@ -246,7 +251,7 @@ double vector_min(const Vector *x) {
 double vector_max(const Vector *x) {
     if (!x) {
         NULL_ERROR("Vector");
-        return 0;
+        return NAN;
     }
 
     double max = x->data[0];
@@ -259,7 +264,7 @@ double vector_max(const Vector *x) {
 double vector_sum(const Vector *x) {
     if (!x) {
         NULL_ERROR("Vector");
-        return 0;
+        return NAN;
     }
 
     double sum = 0;
@@ -272,7 +277,7 @@ double vector_sum(const Vector *x) {
 double vector_mean(const Vector *x) {
     if (!x) {
         NULL_ERROR("Vector");
-        return 0;
+        return NAN;
     }
 
     return vector_sum(x) / x->dim;
@@ -281,11 +286,11 @@ double vector_mean(const Vector *x) {
 double vector_std(const Vector *x, const int ddof) {
     if (!x) {
         NULL_ERROR("Vector");
-        return 0;
+        return NAN;
     }
     if (ddof != 0 && ddof != 1) {
         CUSTOM_ERROR("Property 'ddof' must be 0 or 1");
-        return 0;
+        return NAN;
     }
 
     const int n = x->dim;
@@ -308,12 +313,12 @@ double vector_std(const Vector *x, const int ddof) {
 double vector_dot_product(const Vector *x, const Vector *y) {
     if (!x || !y) {
         NULL_ERROR("Vector");
-        return 0;
+        return NAN;
     }
 
     if (x->dim != y->dim) {
         CUSTOM_ERROR("Vector dimensions must match for dot product");
-        return 0;
+        return NAN;
     }
 
     double sum = 0;

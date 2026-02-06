@@ -64,6 +64,18 @@ void bgd_regression_fit(BGDRegression *model, Matrix *X, Vector *y, const double
         CUSTOM_ERROR("Property 'print_iter' must be 0 or 1");
         return;
     }
+    if (alpha < 0) {
+        CUSTOM_ERROR("Alpha must be greater than zero");
+        return;
+    }
+    if (lambda < 0) {
+        CUSTOM_ERROR("Lambda must be greater than zero");
+        return;
+    }
+    if (ratio < 0 || ratio > 1) {
+        CUSTOM_ERROR("Ratio must be between 0 and 1");
+        return;
+    }
 
     const int m = X->rows;
     const int n = X->cols;

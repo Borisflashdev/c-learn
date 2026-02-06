@@ -105,6 +105,7 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const 
     matrix_free(y_mat);
     matrix_free(Xt);
     matrix_free(XtX);
+    matrix_free(XtX_lambda);
     matrix_free(XtX_inv);
     matrix_free(XtX_inv_Xt);
     matrix_free(w_mat);

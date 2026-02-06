@@ -52,6 +52,12 @@ void scaler_fit(Scaler *scaler, Matrix *X) {
         INDEX_ERROR();
         return;
     }
+    if (scaler->params1) {
+        free(scaler->params1);
+    }
+    if (scaler->params2) {
+        free(scaler->params2);
+    }
 
     scaler->params1 = malloc(sizeof(double) * scaler->num_cols);
     if (!scaler->params1) {
