@@ -1,5 +1,6 @@
 ﻿#include "linear_regression.h"
 
+#include <math.h>
 #include <stdlib.h>
 
 LinearRegression *linear_regression_create(const int number_of_features, const int fit_intercept) {
@@ -18,8 +19,8 @@ LinearRegression *linear_regression_create(const int number_of_features, const i
         ALLOCATION_ERROR();
         return NULL;
     }
-    lr->intercept = 0;
-    lr->lambda = 0;
+    lr->intercept = NAN;
+    lr->lambda = NAN;
     lr->fit_intercept = fit_intercept;
     lr->number_of_features = number_of_features;
 
@@ -56,6 +57,7 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const 
         return;
     }
 
+    model->lambda = lambda;
     Matrix *X_use = NULL;
     if (model->fit_intercept == 0) {
         X_use = matrix_copy(X);

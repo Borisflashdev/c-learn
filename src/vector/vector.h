@@ -31,4 +31,6 @@ double vector_std(const Vector *x, int ddof);
 double vector_dot_product(const Vector *x, const Vector *y);
 void vector_apply(Vector *x, double (*func)(double));
 
+void vector_shuffle(Vector *x);
+
 #endif

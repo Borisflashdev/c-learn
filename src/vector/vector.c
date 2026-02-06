@@ -1,9 +1,8 @@
 ﻿#include <stdlib.h>
 #include <string.h>
+#include <tgmath.h>
 
 #include "vector.h"
-
-#include <tgmath.h>
 
 
 Vector *vector_create(const int dim) {
@@ -340,5 +339,18 @@ void vector_apply(Vector *x, double (*func)(double)) {
 
     for (int i = 0; i < x->dim; i++) {
         x->data[i] = func(x->data[i]);
+    }
+}
+
+void vector_shuffle(Vector *x) {
+    if (!x) {
+        NULL_ERROR("Vector");
+        return;
+    }
+    for (int i = x->dim - 1; i > 0; i--) {
+        const int j = rand() % (i + 1);
+        const double temp = x->data[i];
+        x->data[i] = x->data[j];
+        x->data[j] = temp;
     }
 }

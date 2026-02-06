@@ -1,6 +1,6 @@
 ﻿#include "math_functions.h"
 
-double sign(const double num) {
+double math_sign(const double num) {
     if (num < 0) {
         return -1;
     }
