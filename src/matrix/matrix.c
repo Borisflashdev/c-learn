@@ -24,7 +24,7 @@ Matrix *matrix_create(const int rows, const int cols) {
 
 Matrix *matrix_copy(const Matrix *X) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
 
@@ -43,13 +43,13 @@ void matrix_free(Matrix *X) {
         free(X->data);
         free(X);
     } else {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
     }
 }
 
 double matrix_get(const Matrix *X, const int i, const int j) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
@@ -61,7 +61,7 @@ double matrix_get(const Matrix *X, const int i, const int j) {
 
 void matrix_set(Matrix *X, const int i, const int j, const double value) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     if (i >= X->rows || j >= X->cols || i < 0 || j < 0) {
@@ -155,7 +155,7 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
 
 void matrix_print(const Matrix *X) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
 
@@ -186,7 +186,7 @@ void matrix_print(const Matrix *X) {
 
 void matrix_print_head(const Matrix *X, const int num) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     if (num < 1 || num > X->rows) {
@@ -209,7 +209,7 @@ void matrix_print_head(const Matrix *X, const int num) {
 
 void matrix_print_tail(const Matrix *X, const int num) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     if (num > X->rows || num < 1) {
@@ -234,7 +234,7 @@ void matrix_print_tail(const Matrix *X, const int num) {
 
 void matrix_shape(const Matrix *X) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
 
@@ -243,7 +243,7 @@ void matrix_shape(const Matrix *X) {
 
 double matrix_size(const Matrix *X) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
 
@@ -252,7 +252,7 @@ double matrix_size(const Matrix *X) {
 
 Matrix *matrix_transpose(Matrix *X, const int inplace) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (inplace != 0 && inplace != 1) {
@@ -280,7 +280,7 @@ Matrix *matrix_transpose(Matrix *X, const int inplace) {
 
 Matrix *matrix_inverse(Matrix *X, const int inplace) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (X->rows != X->cols) {
@@ -371,7 +371,7 @@ Matrix *matrix_inverse(Matrix *X, const int inplace) {
 
 Matrix *matrix_slice(const Matrix *X, const int i_start, const int i_end, const int j_start, const int j_end) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (i_start < 0 || i_end < 0 || i_start >= X->rows || i_end > X->rows || i_start >= i_end) {
@@ -401,7 +401,7 @@ Matrix *matrix_slice(const Matrix *X, const int i_start, const int i_end, const 
 
 Matrix *matrix_slice_rows(const Matrix *X, const int start, const int end) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (start < 0 || end < 0 || start >= X->rows || end > X->rows || start >= end) {
@@ -424,7 +424,7 @@ Matrix *matrix_slice_rows(const Matrix *X, const int start, const int end) {
 
 Matrix *matrix_slice_cols(const Matrix *X, const int start, const int end) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (start < 0 || end < 0 || start >= X->cols || end > X->cols || start >= end) {
@@ -449,7 +449,7 @@ Matrix *matrix_slice_cols(const Matrix *X, const int start, const int end) {
 
 Matrix *matrix_concat(const Matrix *A, const Matrix *B) {
     if (!A || !B) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (A->rows != B->rows) {
@@ -474,7 +474,7 @@ Matrix *matrix_concat(const Matrix *A, const Matrix *B) {
 
 Matrix *matrix_arithmetic(const Matrix *A, const Matrix *B, const char op) {
     if (!A || !B) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (A->cols != B->cols || A->rows != B->rows) {
@@ -523,7 +523,7 @@ Matrix *matrix_arithmetic(const Matrix *A, const Matrix *B, const char op) {
 // TODO: try faster multiply (strassen? winograd)
 Matrix *matrix_multiplication(const Matrix *A, const Matrix *B) {
     if (!A || !B) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (A->cols != B->rows) {
@@ -556,7 +556,7 @@ Matrix *matrix_multiplication(const Matrix *A, const Matrix *B) {
 
 void matrix_scalar_arithmetic(Matrix *X, const double scalar, const char op) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
 
@@ -589,7 +589,7 @@ void matrix_scalar_arithmetic(Matrix *X, const double scalar, const char op) {
 
 double matrix_min(const Matrix *X) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
 
@@ -606,7 +606,7 @@ double matrix_min(const Matrix *X) {
 
 double matrix_max(const Matrix *X) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
 
@@ -623,7 +623,7 @@ double matrix_max(const Matrix *X) {
 
 double matrix_sum(const Matrix *X) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
 
@@ -638,7 +638,7 @@ double matrix_sum(const Matrix *X) {
 
 double matrix_mean(const Matrix *X) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
 
@@ -653,7 +653,7 @@ double matrix_mean(const Matrix *X) {
 
 double matrix_col_min(const Matrix *X, const int col) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
     if (col < 0 || col >= X->cols) {
@@ -674,7 +674,7 @@ double matrix_col_min(const Matrix *X, const int col) {
 
 double matrix_col_max(const Matrix *X, const int col) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
     if (col < 0 || col >= X->cols) {
@@ -695,7 +695,7 @@ double matrix_col_max(const Matrix *X, const int col) {
 
 double matrix_col_sum(const Matrix *X, const int col) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
     if (col < 0 || col >= X->cols) {
@@ -714,7 +714,7 @@ double matrix_col_sum(const Matrix *X, const int col) {
 
 double matrix_col_mean(const Matrix *X, const int col) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
     if (col < 0 || col >= X->cols) {
@@ -733,7 +733,7 @@ double matrix_col_mean(const Matrix *X, const int col) {
 
 double matrix_col_std(const Matrix *X, const int col, const int ddof) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
     if (col < 0 || col >= X->cols) {
@@ -769,7 +769,7 @@ double matrix_col_std(const Matrix *X, const int col, const int ddof) {
 
 double matrix_col_dot_product(const Matrix *A, const int col_A, const Matrix *B, const int col_B) {
     if (!A || !B) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return 0;
     }
     if (A->rows != B->rows) {
@@ -795,7 +795,7 @@ double matrix_col_dot_product(const Matrix *A, const int col_A, const Matrix *B,
 
 void matrix_apply_col(Matrix *X, const int col, double (*func)(double)) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     if (!func) {
@@ -815,7 +815,7 @@ void matrix_apply_col(Matrix *X, const int col, double (*func)(double)) {
 
 Matrix *vector_to_matrix(const Vector *x) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return NULL;
     }
 
@@ -834,7 +834,7 @@ Matrix *vector_to_matrix(const Vector *x) {
 
 Vector *matrix_to_vector(const Matrix *X, const int col, const int row_start, const int row_end) {
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
     if (col < 0 || col > X->cols) {

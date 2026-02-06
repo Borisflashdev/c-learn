@@ -35,17 +35,17 @@ void scaler_free(Scaler *scaler) {
         free(scaler->params2);
         free(scaler);
     } else {
-        NULL_SCALER_ERROR();
+        NULL_ERROR("Scaler");
     }
 }
 
 void scaler_fit(Scaler *scaler, Matrix *X) {
     if (!scaler) {
-        NULL_SCALER_ERROR();
+        NULL_ERROR("Scaler");
         return;
     }
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     if (scaler->col_start > X->cols || scaler->col_end > X->cols) {
@@ -97,11 +97,11 @@ void scaler_fit(Scaler *scaler, Matrix *X) {
 
 void scaler_transform(Scaler *scaler, Matrix *X) {
     if (!scaler) {
-        NULL_SCALER_ERROR();
+        NULL_ERROR("Scaler");
         return;
     }
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     if (scaler->col_start > X->cols || scaler->col_end > X->cols) {
@@ -159,11 +159,11 @@ void scaler_fit_transform(Scaler *scaler, Matrix *X) {
 
 void scaler_inverse_transform(Scaler *scaler, Matrix *X) {
     if (!scaler) {
-        NULL_SCALER_ERROR();
+        NULL_ERROR("Scaler");
         return;
     }
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     if (scaler->col_start > X->cols || scaler->col_end > X->cols) {

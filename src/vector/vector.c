@@ -25,7 +25,7 @@ Vector *vector_create(const int dim) {
 
 Vector *vector_copy(const Vector *x) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return NULL;
     }
 
@@ -44,13 +44,13 @@ void vector_free(Vector *x) {
         free(x->data);
         free(x);
     } else {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
     }
 }
 
 double vector_get(const Vector *x, const int i) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return 0;
     }
     if (i < 0 || i >= x->dim) {
@@ -62,7 +62,7 @@ double vector_get(const Vector *x, const int i) {
 
 void vector_set(Vector *x, const int i, const double value) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return;
     }
     if (i < 0 || i >= x->dim) {
@@ -74,7 +74,7 @@ void vector_set(Vector *x, const int i, const double value) {
 
 void vector_print(const Vector *x) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return;
     }
 
@@ -99,7 +99,7 @@ void vector_print(const Vector *x) {
 
 void vector_print_head(const Vector *x, const int num) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return;
     }
 
@@ -122,7 +122,7 @@ void vector_print_head(const Vector *x, const int num) {
 
 void vector_print_tail(const Vector *x, const int num) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return;
     }
 
@@ -143,7 +143,7 @@ void vector_print_tail(const Vector *x, const int num) {
 
 Vector *vector_arithmetic(const Vector *x, const Vector *y, const char op) {
     if (!x || !y) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return NULL;
     }
 
@@ -196,7 +196,7 @@ Vector *vector_arithmetic(const Vector *x, const Vector *y, const char op) {
 
 void vector_scalar_arithmetic(Vector *x, const double scalar, const char op) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return;
     }
 
@@ -232,7 +232,7 @@ void vector_scalar_arithmetic(Vector *x, const double scalar, const char op) {
 
 double vector_min(const Vector *x) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return 0;
     }
 
@@ -245,7 +245,7 @@ double vector_min(const Vector *x) {
 
 double vector_max(const Vector *x) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return 0;
     }
 
@@ -258,7 +258,7 @@ double vector_max(const Vector *x) {
 
 double vector_sum(const Vector *x) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return 0;
     }
 
@@ -271,7 +271,7 @@ double vector_sum(const Vector *x) {
 
 double vector_mean(const Vector *x) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return 0;
     }
 
@@ -280,7 +280,7 @@ double vector_mean(const Vector *x) {
 
 double vector_std(const Vector *x, const int ddof) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return 0;
     }
     if (ddof != 0 && ddof != 1) {
@@ -307,7 +307,7 @@ double vector_std(const Vector *x, const int ddof) {
 
 double vector_dot_product(const Vector *x, const Vector *y) {
     if (!x || !y) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return 0;
     }
 
@@ -325,7 +325,7 @@ double vector_dot_product(const Vector *x, const Vector *y) {
 
 void vector_apply(Vector *x, double (*func)(double)) {
     if (!x) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return;
     }
     if (!func) {

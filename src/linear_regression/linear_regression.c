@@ -28,7 +28,7 @@ LinearRegression *linear_regression_create(const int number_of_features, const i
 
 void linear_regression_free(LinearRegression *linear_regression) {
     if (!linear_regression) {
-        NULL_LINEAR_REGRESSION_ERROR();
+        NULL_ERROR("Linear regression model");
         return;
     }
 
@@ -40,15 +40,15 @@ void linear_regression_free(LinearRegression *linear_regression) {
 
 void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const double lambda) {
     if (!model) {
-        NULL_LINEAR_REGRESSION_ERROR();
+        NULL_ERROR("Linear regression model");
         return;
     }
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     if (!y) {
-        NULL_VECTOR_ERROR();
+        NULL_ERROR("Vector");
         return;
     }
     if (X->rows != y->dim || X->cols != model->number_of_features) {
@@ -70,7 +70,7 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const 
 
     Matrix *lambda_I = matrix_create(X_use->cols, X_use->cols);
     if (!lambda_I) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return;
     }
     for (int i = 0; i < lambda_I->cols; i++) {
@@ -112,11 +112,11 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const 
 
 Vector *linear_regression_predict(LinearRegression *model, Matrix *X) {
     if (!model) {
-        NULL_LINEAR_REGRESSION_ERROR();
+        NULL_ERROR("Linear regression model");
         return NULL;
     }
     if (!X) {
-        NULL_MATRIX_ERROR();
+        NULL_ERROR("Matrix");
         return NULL;
     }
 

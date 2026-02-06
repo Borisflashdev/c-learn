@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "src/gdregression/bgdregression.h"
 #include "src/linear_regression/linear_regression.h"
 #include "src/matrix/matrix.h"
 #include "src/scaler/scaler.h"
