@@ -4,13 +4,6 @@
 #include "../matrix/matrix.h"
 #include "../math_functions/math_functions.h"
 
-typedef enum {
-    NO_PENALTY,
-    L1_LASSO,
-    L2_RIDGE,
-    ELASTIC_NET
-} Penalty;
-
 typedef struct {
     Vector *coef;
     double intercept;

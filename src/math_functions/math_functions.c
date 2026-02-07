@@ -15,3 +15,7 @@ double math_sign(const double num) {
 double math_xavier(const double num) {
     return sqrt(6 / (num + 1));
 }
+
+double math_sigmoid(const double num) {
+    return 1 / (1 + exp(-num));
+}
