@@ -1,10 +1,10 @@
-﻿#include "sgdregression.h"
+﻿#include "logistic_regression.h"
 
+#include <math.h>
 #include <stdlib.h>
-#include <tgmath.h>
 #include <time.h>
 
-SGDRegression *sgd_regression_create(const int number_of_features, const int fit_intercept, const int random_seed, const Penalty penalty) {
+LogisticRegression *logistic_regression_create(const int number_of_features, const int fit_intercept, const int random_seed, const double threshold, const Penalty penalty) {
     if (number_of_features < 1) {
         INDEX_ERROR();
         return NULL;
@@ -13,26 +13,27 @@ SGDRegression *sgd_regression_create(const int number_of_features, const int fit
         CUSTOM_ERROR("Property 'fit_intercept' must be 0 or 1");
         return NULL;
     }
-    SGDRegression *sgd = malloc(sizeof(SGDRegression));
-    sgd->coef = vector_create(number_of_features);
-    if (!sgd->coef) {
+    LogisticRegression *lr = malloc(sizeof(LogisticRegression));
+    lr->coef = vector_create(number_of_features);
+    if (!lr->coef) {
         ALLOCATION_ERROR();
         return NULL;
     }
-    sgd->intercept = NAN;
-    sgd->lambda = NAN;
-    sgd->ratio = NAN;
-    sgd->fit_intercept = fit_intercept;
-    sgd->number_of_features = number_of_features;
-    sgd->random_seed = random_seed;
-    sgd->penalty = penalty;
+    lr->intercept = NAN;
+    lr->lambda = NAN;
+    lr->ratio = NAN;
+    lr->fit_intercept = fit_intercept;
+    lr->number_of_features = number_of_features;
+    lr->random_seed = random_seed;
+    lr->threshold = threshold;
+    lr->penalty = penalty;
 
-    return sgd;
+    return lr;
 }
 
-void sgd_regression_free(SGDRegression *model) {
+void logistic_regression_free(LogisticRegression *model) {
     if (!model) {
-        NULL_ERROR("SDRegression model");
+        NULL_ERROR("LogisticRegression model");
         return;
     }
     if (model->coef) {
@@ -41,9 +42,9 @@ void sgd_regression_free(SGDRegression *model) {
     free(model);
 }
 
-void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, const double lambda, const double ratio) {
+void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, double lambda, double ratio) {
     if (!model) {
-        NULL_ERROR("SDRegression model");
+        NULL_ERROR("LogisticRegression model");
         return;
     }
     if (!X) {
@@ -139,7 +140,7 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
             for (int j = 0; j < n; j++) {
                 dot += matrix_get(X, i, j) * vector_get(model->coef, j);
             }
-            const double prediction = dot + model->intercept;
+            const double prediction = math_sigmoid(dot + model->intercept);
             const double error_i = prediction - vector_get(y, i);
 
             if (model->fit_intercept == 1) {
@@ -178,9 +179,9 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
     vector_free(indices);
 }
 
-Vector *sgd_regression_predict(SGDRegression *model, Matrix *X) {
+Vector *logistic_regression_predict_proba(LogisticRegression *model, Matrix *X) {
     if (!model) {
-        NULL_ERROR("SDRegression model");
+        NULL_ERROR("LogisticRegression model");
         return NULL;
     }
     if (!X) {
@@ -192,18 +193,40 @@ Vector *sgd_regression_predict(SGDRegression *model, Matrix *X) {
         return NULL;
     }
 
-    Matrix *w_mat = vector_to_matrix(model->coef);
-    Matrix *y_hat = matrix_multiplication(X, w_mat);
-    Vector *res = matrix_to_vector(y_hat, 0, 0, y_hat->rows);
-
-    matrix_free(w_mat);
-    matrix_free(y_hat);
-    if (model->fit_intercept == 0) {
-        return res;
+    Vector *res = vector_create(X->rows);
+    if (!res) {
+        ALLOCATION_ERROR();
+        return NULL;
     }
 
+    for (int i = 0; i < X->rows; i++) {
+        double dot = 0;
+        for (int j = 0; j < X->cols; j++) {
+            dot += matrix_get(X, i, j) * vector_get(model->coef, j);
+        }
+        if (model->fit_intercept == 0) {
+            res->data[i] = math_sigmoid(dot);
+        } else {
+            res->data[i] = math_sigmoid(dot+model->intercept);
+        }
+    }
+
+    return res;
+}
+
+Vector *logistic_regression_predict(LogisticRegression *model, Matrix *X) {
+    Vector *res = logistic_regression_predict_proba(model, X);
+    if (!res) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
     for (int i = 0; i < res->dim; i++) {
-        res->data[i] += model->intercept;
+        if (res->data[i] >= model->threshold) {
+            res->data[i] = 1;
+        } else {
+            res->data[i] = 0;
+        }
     }
+
     return res;
 }
