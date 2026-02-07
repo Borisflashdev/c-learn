@@ -3,6 +3,7 @@
 
 #include "../matrix/matrix.h"
 #include "../math_functions/math_functions.h"
+#include "../penalty_types/penalty_types.h"
 
 typedef struct {
     Vector *coef;
