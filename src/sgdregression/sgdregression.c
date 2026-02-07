@@ -4,7 +4,7 @@
 #include <tgmath.h>
 #include <time.h>
 
-SGDRegression *sgd_regression_create(const int number_of_features, const int fit_intercept, const Penalty penalty) {
+SGDRegression *sgd_regression_create(const int number_of_features, const int fit_intercept, const int random_seed, const Penalty penalty) {
     if (number_of_features < 1) {
         INDEX_ERROR();
         return NULL;
@@ -24,6 +24,7 @@ SGDRegression *sgd_regression_create(const int number_of_features, const int fit
     sgd->ratio = NAN;
     sgd->fit_intercept = fit_intercept;
     sgd->number_of_features = number_of_features;
+    sgd->random_seed = random_seed;
     sgd->penalty = penalty;
 
     return sgd;
@@ -40,7 +41,7 @@ void sgd_regression_free(SGDRegression *model) {
     free(model);
 }
 
-void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double w_in, const double b_in, const double alpha, const int num_iters, const double lambda, const double ratio) {
+void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, const double lambda, const double ratio) {
     if (!model) {
         NULL_ERROR("SDRegression model");
         return;
@@ -79,7 +80,7 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
                 CUSTOM_ERROR("ratio is not use with 'L1_LASSO', must be set to NAN");
                 return;
             }
-            if (lambda < 0) {
+            if (lambda < 0 || isnan(lambda)) {
                 CUSTOM_ERROR("Lambda must be greater than zero");
                 return;
             }
@@ -90,18 +91,18 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
                 CUSTOM_ERROR("ratio is not use with 'L2_RIDGE', must be set to NAN");
                 return;
             }
-            if (lambda < 0) {
+            if (lambda < 0 || isnan(lambda)) {
                 CUSTOM_ERROR("Lambda must be greater than zero");
                 return;
             }
             break;
         }
         case ELASTIC_NET: {
-            if (lambda < 0) {
+            if (lambda < 0 || isnan(lambda)) {
                 CUSTOM_ERROR("Lambda must be greater than zero");
                 return;
             }
-            if (ratio < 0 || ratio > 1) {
+            if (ratio < 0 || ratio > 1 || isnan(ratio)) {
                 CUSTOM_ERROR("Ratio must be between 0 and 1");
                 return;
             }
@@ -112,10 +113,14 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
     const int m = X->rows;
     const int n = X->cols;
 
+    srand(model->random_seed < 0 ? time(NULL) : model->random_seed);
+
+    const double limit = math_xavier(n);
     for (int i = 0; i < model->number_of_features; i++) {
-        vector_set(model->coef, i, w_in);
+        const double random_w = ((double)rand() / (double)RAND_MAX * 2.0 * limit) - limit;
+        vector_set(model->coef, i, random_w);
     }
-    model->intercept = b_in;
+    model->intercept = 0;
     model->lambda = lambda;
     model->ratio = ratio;
 
@@ -123,7 +128,6 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
     for (int i = 0; i < m; i++) {
         vector_set(indices, i, i);
     }
-    srand(time(NULL));
 
     for (int iter = 0; iter < num_iters; iter++) {
         vector_shuffle(indices);
@@ -158,11 +162,11 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
                         break;
                     }
                     case L2_RIDGE: {
-                        w_j -= alpha * (grad_j + 2*lambda*w_j);
+                        w_j -= alpha * (grad_j + lambda*w_j);
                         break;
                     }
                     case ELASTIC_NET: {
-                        const double penalty = lambda * (ratio * math_sign(w_j)+(1-ratio)*2*w_j);
+                        const double penalty = lambda * (ratio * math_sign(w_j)+(1-ratio)*w_j);
                         w_j = w_j - alpha * (grad_j + penalty);
                         break;
                     }

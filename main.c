@@ -1,6 +1,7 @@
 ﻿#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "src/linear_regression/linear_regression.h"
 #include "src/matrix/matrix.h"
@@ -20,8 +21,8 @@ int main() {
     Matrix *my_data = read_csv("my_apartment.csv", ',', 0);
     scaler_transform(scaler, my_data);
 
-    SGDRegression *model = sgd_regression_create(X->cols, 1, NO_PENALTY);
-    sgd_regression_fit(model, X, y, 0, 0, 0.001, 1000, NAN,NAN);
+    SGDRegression *model = sgd_regression_create(X->cols, 1, -1, NO_PENALTY);
+    sgd_regression_fit(model, X, y, 0.001, 1000, NAN,NAN);
 
     Vector *prediction = sgd_regression_predict(model, my_data);
     vector_print(prediction);

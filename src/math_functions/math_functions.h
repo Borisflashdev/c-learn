@@ -2,5 +2,6 @@
 #define MATH_FUNCTIONS_H
 
 double math_sign(double num);
+double math_xavier(double num);
 
 #endif
