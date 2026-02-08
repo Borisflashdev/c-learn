@@ -5,7 +5,7 @@
 
 LinearRegression *linear_regression_create(const int number_of_features, const int fit_intercept) {
     if (number_of_features < 1) {
-        INDEX_ERROR();
+        CUSTOM_ERROR("'number_of_features' must be at least 1");
         return NULL;
     }
     if (fit_intercept != 0 && fit_intercept != 1) {
@@ -14,9 +14,14 @@ LinearRegression *linear_regression_create(const int number_of_features, const i
     }
 
     LinearRegression *lr = malloc(sizeof(LinearRegression));
+    if (!lr) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
     lr->coef = vector_create(number_of_features);
     if (!lr->coef) {
         ALLOCATION_ERROR();
+        free(lr);
         return NULL;
     }
     lr->intercept = NAN;
@@ -53,7 +58,7 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const 
         return;
     }
     if (X->rows != y->dim || X->cols != model->number_of_features) {
-        CUSTOM_ERROR("Dimension mismatch");
+        CUSTOM_ERROR("X->rows must equal y->dim and X->cols must equal number_of_features");
         return;
     }
 
@@ -88,6 +93,16 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const 
     Matrix *XtX = matrix_multiplication(Xt, X_use);
     Matrix *XtX_lambda = matrix_arithmetic(XtX, lambda_I, '+');
     Matrix *XtX_inv = matrix_inverse(XtX_lambda, 0);
+    if (!XtX_inv) {
+        CUSTOM_ERROR("Matrix is singular, cannot compute inverse");
+        matrix_free(X_use);
+        matrix_free(lambda_I);
+        matrix_free(y_mat);
+        matrix_free(Xt);
+        matrix_free(XtX);
+        matrix_free(XtX_lambda);
+        return;
+    }
     Matrix *XtX_inv_Xt = matrix_multiplication(XtX_inv, Xt);
     Matrix *w_mat = matrix_multiplication(XtX_inv_Xt, y_mat);
 

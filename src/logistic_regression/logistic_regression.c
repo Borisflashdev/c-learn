@@ -6,7 +6,7 @@
 
 LogisticRegression *logistic_regression_create(const int number_of_features, const int fit_intercept, const int random_seed, const double threshold, const Penalty penalty) {
     if (number_of_features < 1) {
-        INDEX_ERROR();
+        CUSTOM_ERROR("'number_of_features' must be at least 1");
         return NULL;
     }
     if (fit_intercept != 0 && fit_intercept != 1) {
@@ -14,9 +14,14 @@ LogisticRegression *logistic_regression_create(const int number_of_features, con
         return NULL;
     }
     LogisticRegression *lr = malloc(sizeof(LogisticRegression));
+    if (!lr) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
     lr->coef = vector_create(number_of_features);
     if (!lr->coef) {
         ALLOCATION_ERROR();
+        free(lr);
         return NULL;
     }
     lr->intercept = NAN;
@@ -56,55 +61,55 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
         return;
     }
     if (X->rows != y->dim || X->cols != model->number_of_features) {
-        CUSTOM_ERROR("Dimension mismatch");
+        CUSTOM_ERROR("X->rows must equal y->dim and X->cols must equal number_of_features");
         return;
     }
     if (num_iters < 1) {
-        CUSTOM_ERROR("Number of iterations must be greater than zero");
+        CUSTOM_ERROR("'num_iters' must be at least 1");
         return;
     }
     if (alpha < 0) {
-        CUSTOM_ERROR("Alpha must be greater than zero");
+        CUSTOM_ERROR("'alpha' must be non-negative");
         return;
     }
 
     switch (model->penalty) {
         case NO_PENALTY: {
             if (!isnan(lambda) || !isnan(ratio)) {
-                CUSTOM_ERROR("lambda and ratio is not use with 'NO_PENALTY', must be set to NAN");
+                CUSTOM_ERROR("'lambda' and 'ratio' are unused with NO_PENALTY, pass NAN");
                 return;
             }
             break;
         }
         case L1_LASSO: {
             if (!isnan(ratio)) {
-                CUSTOM_ERROR("ratio is not use with 'L1_LASSO', must be set to NAN");
+                CUSTOM_ERROR("'ratio' is unused with L1_LASSO, pass NAN");
                 return;
             }
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             break;
         }
         case L2_RIDGE: {
             if (!isnan(ratio)) {
-                CUSTOM_ERROR("ratio is not use with 'L2_RIDGE', must be set to NAN");
+                CUSTOM_ERROR("'ratio' is unused with L2_RIDGE, pass NAN");
                 return;
             }
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             break;
         }
         case ELASTIC_NET: {
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             if (ratio < 0 || ratio > 1 || isnan(ratio)) {
-                CUSTOM_ERROR("Ratio must be between 0 and 1");
+                CUSTOM_ERROR("'ratio' must be between 0 and 1");
                 return;
             }
             break;
@@ -116,7 +121,7 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
 
     srand(model->random_seed < 0 ? time(NULL) : model->random_seed);
 
-    const double limit = math_xavier(n);
+    const double limit = math_xavier(n, 1);
     for (int i = 0; i < model->number_of_features; i++) {
         const double random_w = ((double)rand() / (double)RAND_MAX * 2.0 * limit) - limit;
         vector_set(model->coef, i, random_w);
@@ -189,7 +194,7 @@ Vector *logistic_regression_predict_proba(LogisticRegression *model, Matrix *X) 
         return NULL;
     }
     if (X->cols != model->number_of_features) {
-        CUSTOM_ERROR("Dimension mismatch");
+        CUSTOM_ERROR("X->cols must equal number_of_features");
         return NULL;
     }
 

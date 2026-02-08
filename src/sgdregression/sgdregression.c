@@ -6,7 +6,7 @@
 
 SGDRegression *sgd_regression_create(const int number_of_features, const int fit_intercept, const int random_seed, const Penalty penalty) {
     if (number_of_features < 1) {
-        INDEX_ERROR();
+        CUSTOM_ERROR("'number_of_features' must be at least 1");
         return NULL;
     }
     if (fit_intercept != 0 && fit_intercept != 1) {
@@ -14,9 +14,14 @@ SGDRegression *sgd_regression_create(const int number_of_features, const int fit
         return NULL;
     }
     SGDRegression *sgd = malloc(sizeof(SGDRegression));
+    if (!sgd) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
     sgd->coef = vector_create(number_of_features);
     if (!sgd->coef) {
         ALLOCATION_ERROR();
+        free(sgd);
         return NULL;
     }
     sgd->intercept = NAN;
@@ -32,7 +37,7 @@ SGDRegression *sgd_regression_create(const int number_of_features, const int fit
 
 void sgd_regression_free(SGDRegression *model) {
     if (!model) {
-        NULL_ERROR("SDRegression model");
+        NULL_ERROR("SGDRegression model");
         return;
     }
     if (model->coef) {
@@ -43,7 +48,7 @@ void sgd_regression_free(SGDRegression *model) {
 
 void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, const double lambda, const double ratio) {
     if (!model) {
-        NULL_ERROR("SDRegression model");
+        NULL_ERROR("SGDRegression model");
         return;
     }
     if (!X) {
@@ -55,55 +60,55 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
         return;
     }
     if (X->rows != y->dim || X->cols != model->number_of_features) {
-        CUSTOM_ERROR("Dimension mismatch");
+        CUSTOM_ERROR("X->rows must equal y->dim and X->cols must equal number_of_features");
         return;
     }
     if (num_iters < 1) {
-        CUSTOM_ERROR("Number of iterations must be greater than zero");
+        CUSTOM_ERROR("'num_iters' must be at least 1");
         return;
     }
     if (alpha < 0) {
-        CUSTOM_ERROR("Alpha must be greater than zero");
+        CUSTOM_ERROR("'alpha' must be non-negative");
         return;
     }
 
     switch (model->penalty) {
         case NO_PENALTY: {
             if (!isnan(lambda) || !isnan(ratio)) {
-                CUSTOM_ERROR("lambda and ratio is not use with 'NO_PENALTY', must be set to NAN");
+                CUSTOM_ERROR("'lambda' and 'ratio' are unused with NO_PENALTY, pass NAN");
                 return;
             }
             break;
         }
         case L1_LASSO: {
             if (!isnan(ratio)) {
-                CUSTOM_ERROR("ratio is not use with 'L1_LASSO', must be set to NAN");
+                CUSTOM_ERROR("'ratio' is unused with L1_LASSO, pass NAN");
                 return;
             }
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             break;
         }
         case L2_RIDGE: {
             if (!isnan(ratio)) {
-                CUSTOM_ERROR("ratio is not use with 'L2_RIDGE', must be set to NAN");
+                CUSTOM_ERROR("'ratio' is unused with L2_RIDGE, pass NAN");
                 return;
             }
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             break;
         }
         case ELASTIC_NET: {
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             if (ratio < 0 || ratio > 1 || isnan(ratio)) {
-                CUSTOM_ERROR("Ratio must be between 0 and 1");
+                CUSTOM_ERROR("'ratio' must be between 0 and 1");
                 return;
             }
             break;
@@ -115,7 +120,7 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
 
     srand(model->random_seed < 0 ? time(NULL) : model->random_seed);
 
-    const double limit = math_xavier(n);
+    const double limit = math_xavier(n, 1);
     for (int i = 0; i < model->number_of_features; i++) {
         const double random_w = ((double)rand() / (double)RAND_MAX * 2.0 * limit) - limit;
         vector_set(model->coef, i, random_w);
@@ -180,7 +185,7 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
 
 Vector *sgd_regression_predict(SGDRegression *model, Matrix *X) {
     if (!model) {
-        NULL_ERROR("SDRegression model");
+        NULL_ERROR("SGDRegression model");
         return NULL;
     }
     if (!X) {
@@ -188,7 +193,7 @@ Vector *sgd_regression_predict(SGDRegression *model, Matrix *X) {
         return NULL;
     }
     if (X->cols != model->number_of_features) {
-        CUSTOM_ERROR("Dimension mismatch");
+        CUSTOM_ERROR("X->cols must equal number_of_features");
         return NULL;
     }
 

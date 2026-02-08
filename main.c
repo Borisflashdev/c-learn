@@ -11,7 +11,7 @@
 
 int main() {
     // Import DataFrame
-    Matrix *df = read_csv("test_data.csv", ',', 0);
+    Matrix *df = read_csv("test_data.csv", ',', 1);
 
     Matrix *X = matrix_slice_cols(df, 0, df->cols-1);
     Vector *y = matrix_to_vector(df, df->cols-1, 0, df->rows);

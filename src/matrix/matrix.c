@@ -4,6 +4,28 @@
 
 #include "matrix.h"
 
+static int read_line(char **buf, size_t *cap, FILE *fp) {
+    size_t len = 0;
+    if (*buf == NULL) {
+        *cap = 1024;
+        *buf = malloc(*cap);
+        if (!*buf) return -1;
+    }
+    while (1) {
+        if (fgets(*buf + len, (int)(*cap - len), fp) == NULL)
+            return len > 0 ? (int)len : -1;
+        len += strlen(*buf + len);
+        if (len > 0 && (*buf)[len - 1] == '\n')
+            return (int)len;
+        if (feof(fp))
+            return (int)len;
+        *cap *= 2;
+        char *tmp = realloc(*buf, *cap);
+        if (!tmp) return -1;
+        *buf = tmp;
+    }
+}
+
 Matrix *matrix_create(const int rows, const int cols) {
     if (rows < 1 || cols < 1) {
         CUSTOM_ERROR("Invalid matrix dimensions");
@@ -76,7 +98,6 @@ void matrix_set(Matrix *X, const int i, const int j, const double value) {
     X->data[i * X->cols + j] = value;
 }
 
-// BUG: fix BOM check
 Matrix *read_csv(const char *path, const char separator, const int has_header) {
     if (has_header < 0 || has_header > 1) {
         CUSTOM_ERROR("Property 'has_header' must be 0 or 1");
@@ -88,7 +109,8 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
         return NULL;
     }
 
-    char line[1024];
+    char *line = NULL;
+    size_t line_cap = 0;
 
     const int c1 = fgetc(file);
     const int c2 = fgetc(file);
@@ -98,14 +120,13 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
     }
 
     if (has_header == 1) {
-        fgets(line, sizeof(line), file);
+        read_line(&line, &line_cap, file);
     }
 
     int rows = 0;
     int cols = 0;
-    const long data_start = ftell(file);
 
-    while(fgets(line, sizeof(line), file)) {
+    while(read_line(&line, &line_cap, file) != -1) {
         if (rows == 0) {
             cols = 1;
             for (int i = 0; line[i] != '\0' && line[i] != '\n' && line[i] != '\r'; i++) {
@@ -119,6 +140,7 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
 
     if (rows == 0 || cols == 0) {
         CUSTOM_ERROR("Empty CSV file");
+        free(line);
         fclose(file);
         return NULL;
     }
@@ -126,17 +148,30 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
     Matrix *X = matrix_create(rows, cols);
     if (!X) {
         ALLOCATION_ERROR();
+        free(line);
         fclose(file);
         return NULL;
     }
 
-    fseek(file, data_start, SEEK_SET);
+    rewind(file);
+    {
+        const int b1 = fgetc(file);
+        const int b2 = fgetc(file);
+        const int b3 = fgetc(file);
+        if (!(b1 == 0xEF && b2 == 0xBB && b3 == 0xBF)) {
+            rewind(file);
+        }
+    }
+    if (has_header == 1) {
+        read_line(&line, &line_cap, file);
+    }
 
     int i = 0;
-    while(fgets(line, sizeof(line), file) && i < rows) {
+    while(read_line(&line, &line_cap, file) != -1 && i < rows) {
         int j = 0;
         const char sep[2] = {separator, '\0'};
-        const char *token = strtok(line, sep);
+        char *saveptr;
+        const char *token = strtok_r(line, sep, &saveptr);
         while(token && j < cols) {
             char *endptr;
             errno = 0;
@@ -148,12 +183,13 @@ Matrix *read_csv(const char *path, const char separator, const int has_header) {
             }
 
             X->data[i * X->cols + j] = val;
-            token = strtok(NULL, sep);
+            token = strtok_r(NULL, sep, &saveptr);
             j++;
         }
         i++;
     }
 
+    free(line);
     fclose(file);
     return X;
 }
@@ -799,6 +835,22 @@ double matrix_col_dot_product(const Matrix *A, const int col_A, const Matrix *B,
     }
 
     return sum;
+}
+
+void matrix_apply(Matrix *X, double (*func)(double)) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return;
+    }
+    if (!func) {
+        CUSTOM_ERROR("Function pointer is NULL");
+        return;
+    }
+
+    const int size = X->rows * X->cols;
+    for (int i = 0; i < size; i++) {
+        X->data[i] = func(X->data[i]);
+    }
 }
 
 void matrix_apply_col(Matrix *X, const int col, double (*func)(double)) {
