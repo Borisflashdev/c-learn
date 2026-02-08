@@ -1,5 +1,6 @@
 ﻿#include "sgdregression.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <tgmath.h>
 #include <time.h>
@@ -46,7 +47,7 @@ void sgd_regression_free(SGDRegression *model) {
     free(model);
 }
 
-void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, const double lambda, const double ratio) {
+void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, const double lambda, const double ratio, const int print_every) {
     if (!model) {
         NULL_ERROR("SGDRegression model");
         return;
@@ -69,6 +70,10 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
     }
     if (alpha < 0) {
         CUSTOM_ERROR("'alpha' must be non-negative");
+        return;
+    }
+    if (print_every < 0) {
+        CUSTOM_ERROR("'print_every' must be non-negative");
         return;
     }
 
@@ -118,11 +123,12 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
     const int m = X->rows;
     const int n = X->cols;
 
-    srand(model->random_seed < 0 ? time(NULL) : model->random_seed);
+    const uint64_t seed = model->random_seed < 0 ? (uint64_t)time(NULL) : (uint64_t)model->random_seed;
+    pcg32_seed(seed);
 
     const double limit = math_xavier(n, 1);
     for (int i = 0; i < model->number_of_features; i++) {
-        const double random_w = ((double)rand() / (double)RAND_MAX * 2.0 * limit) - limit;
+        const double random_w = pcg32_random_double() * 2.0 * limit - limit;
         vector_set(model->coef, i, random_w);
     }
     model->intercept = 0;
@@ -136,6 +142,7 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
 
     for (int iter = 0; iter < num_iters; iter++) {
         vector_shuffle(indices);
+        double total_error = 0.0;
 
         for (int idx = 0; idx < m; idx++) {
             const int i = (int) vector_get(indices, idx);
@@ -146,6 +153,8 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
             }
             const double prediction = dot + model->intercept;
             const double error_i = prediction - vector_get(y, i);
+
+            total_error += error_i * error_i;
 
             if (model->fit_intercept == 1) {
                 model->intercept -= alpha * error_i;
@@ -178,6 +187,9 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
                 }
                 vector_set(model->coef, j, w_j);
             }
+        }
+        if (print_every > 0 && (iter % print_every == 0 || iter == num_iters - 1)) {
+            printf("Epoch: %d | Cost (MSE): [%lf]\n", iter + 1, total_error/(2*m));
         }
     }
     vector_free(indices);

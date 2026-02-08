@@ -4,7 +4,6 @@
 
 #include "vector.h"
 
-
 Vector *vector_create(const int dim) {
     if (dim < 1) {
         CUSTOM_ERROR("Invalid vector dimension");
@@ -348,7 +347,7 @@ void vector_shuffle(Vector *x) {
         return;
     }
     for (int i = x->dim - 1; i > 0; i--) {
-        const int j = rand() % (i + 1);
+        const int j = (int)(pcg32_random_double() * (i + 1));
         const double temp = x->data[i];
         x->data[i] = x->data[j];
         x->data[j] = temp;

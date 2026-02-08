@@ -47,7 +47,7 @@ void logistic_regression_free(LogisticRegression *model) {
     free(model);
 }
 
-void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, double lambda, double ratio) {
+void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, double lambda, double ratio, const int print_every) {
     if (!model) {
         NULL_ERROR("LogisticRegression model");
         return;
@@ -70,6 +70,10 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
     }
     if (alpha < 0) {
         CUSTOM_ERROR("'alpha' must be non-negative");
+        return;
+    }
+    if (print_every < 0) {
+        CUSTOM_ERROR("'print_every' must be non-negative");
         return;
     }
 
@@ -119,11 +123,12 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
     const int m = X->rows;
     const int n = X->cols;
 
-    srand(model->random_seed < 0 ? time(NULL) : model->random_seed);
+    const uint64_t seed = model->random_seed < 0 ? (uint64_t)time(NULL) : (uint64_t)model->random_seed;
+    pcg32_seed(seed);
 
     const double limit = math_xavier(n, 1);
     for (int i = 0; i < model->number_of_features; i++) {
-        const double random_w = ((double)rand() / (double)RAND_MAX * 2.0 * limit) - limit;
+        const double random_w = pcg32_random_double() / (double)RAND_MAX * 2.0 * limit - limit;
         vector_set(model->coef, i, random_w);
     }
     model->intercept = 0;
@@ -137,6 +142,7 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
 
     for (int iter = 0; iter < num_iters; iter++) {
         vector_shuffle(indices);
+        double total_loss = 0;
 
         for (int idx = 0; idx < m; idx++) {
             const int i = (int) vector_get(indices, idx);
@@ -147,6 +153,17 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
             }
             const double prediction = math_sigmoid(dot + model->intercept);
             const double error_i = prediction - vector_get(y, i);
+
+            const double eps = 1e-15;
+            double p = prediction;
+            if (p < eps) {
+                p = eps;
+            }
+            if (p > 1.0 - eps) {
+                p = 1.0 - eps;
+            }
+            const double loss = -(vector_get(y, i)*log(p)+(1-vector_get(y, i))*log(1-p));
+            total_loss += loss;
 
             if (model->fit_intercept == 1) {
                 model->intercept -= alpha * error_i;
@@ -179,6 +196,9 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
                 }
                 vector_set(model->coef, j, w_j);
             }
+        }
+        if (print_every > 0 && (iter % print_every == 0 || iter == num_iters - 1)) {
+            printf("Epoch: %d | Cost (LOSS): [%lf]\n", iter + 1, total_loss / m);
         }
     }
     vector_free(indices);

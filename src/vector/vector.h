@@ -2,6 +2,7 @@
 #define VECTOR_H
 
 #include "../errors/errors.h"
+#include "../random/random.h"
 
 typedef struct {
     int dim;
