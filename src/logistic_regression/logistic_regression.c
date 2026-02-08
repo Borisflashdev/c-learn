@@ -6,7 +6,7 @@
 
 LogisticRegression *logistic_regression_create(const int number_of_features, const int fit_intercept, const int random_seed, const double threshold, const Penalty penalty) {
     if (number_of_features < 1) {
-        INDEX_ERROR();
+        CUSTOM_ERROR("'number_of_features' must be at least 1");
         return NULL;
     }
     if (fit_intercept != 0 && fit_intercept != 1) {
@@ -14,9 +14,14 @@ LogisticRegression *logistic_regression_create(const int number_of_features, con
         return NULL;
     }
     LogisticRegression *lr = malloc(sizeof(LogisticRegression));
+    if (!lr) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
     lr->coef = vector_create(number_of_features);
     if (!lr->coef) {
         ALLOCATION_ERROR();
+        free(lr);
         return NULL;
     }
     lr->intercept = NAN;
@@ -42,7 +47,7 @@ void logistic_regression_free(LogisticRegression *model) {
     free(model);
 }
 
-void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, double lambda, double ratio) {
+void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, double lambda, double ratio, const int print_every) {
     if (!model) {
         NULL_ERROR("LogisticRegression model");
         return;
@@ -56,55 +61,59 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
         return;
     }
     if (X->rows != y->dim || X->cols != model->number_of_features) {
-        CUSTOM_ERROR("Dimension mismatch");
+        CUSTOM_ERROR("X->rows must equal y->dim and X->cols must equal number_of_features");
         return;
     }
     if (num_iters < 1) {
-        CUSTOM_ERROR("Number of iterations must be greater than zero");
+        CUSTOM_ERROR("'num_iters' must be at least 1");
         return;
     }
     if (alpha < 0) {
-        CUSTOM_ERROR("Alpha must be greater than zero");
+        CUSTOM_ERROR("'alpha' must be non-negative");
+        return;
+    }
+    if (print_every < 0) {
+        CUSTOM_ERROR("'print_every' must be non-negative");
         return;
     }
 
     switch (model->penalty) {
         case NO_PENALTY: {
             if (!isnan(lambda) || !isnan(ratio)) {
-                CUSTOM_ERROR("lambda and ratio is not use with 'NO_PENALTY', must be set to NAN");
+                CUSTOM_ERROR("'lambda' and 'ratio' are unused with NO_PENALTY, pass NAN");
                 return;
             }
             break;
         }
         case L1_LASSO: {
             if (!isnan(ratio)) {
-                CUSTOM_ERROR("ratio is not use with 'L1_LASSO', must be set to NAN");
+                CUSTOM_ERROR("'ratio' is unused with L1_LASSO, pass NAN");
                 return;
             }
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             break;
         }
         case L2_RIDGE: {
             if (!isnan(ratio)) {
-                CUSTOM_ERROR("ratio is not use with 'L2_RIDGE', must be set to NAN");
+                CUSTOM_ERROR("'ratio' is unused with L2_RIDGE, pass NAN");
                 return;
             }
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             break;
         }
         case ELASTIC_NET: {
             if (lambda < 0 || isnan(lambda)) {
-                CUSTOM_ERROR("Lambda must be greater than zero");
+                CUSTOM_ERROR("'lambda' must be non-negative");
                 return;
             }
             if (ratio < 0 || ratio > 1 || isnan(ratio)) {
-                CUSTOM_ERROR("Ratio must be between 0 and 1");
+                CUSTOM_ERROR("'ratio' must be between 0 and 1");
                 return;
             }
             break;
@@ -114,11 +123,12 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
     const int m = X->rows;
     const int n = X->cols;
 
-    srand(model->random_seed < 0 ? time(NULL) : model->random_seed);
+    const uint64_t seed = model->random_seed < 0 ? (uint64_t)time(NULL) : (uint64_t)model->random_seed;
+    pcg32_seed(seed);
 
-    const double limit = math_xavier(n);
+    const double limit = math_xavier(n, 1);
     for (int i = 0; i < model->number_of_features; i++) {
-        const double random_w = ((double)rand() / (double)RAND_MAX * 2.0 * limit) - limit;
+        const double random_w = pcg32_random_double() / (double)RAND_MAX * 2.0 * limit - limit;
         vector_set(model->coef, i, random_w);
     }
     model->intercept = 0;
@@ -132,6 +142,7 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
 
     for (int iter = 0; iter < num_iters; iter++) {
         vector_shuffle(indices);
+        double total_loss = 0;
 
         for (int idx = 0; idx < m; idx++) {
             const int i = (int) vector_get(indices, idx);
@@ -142,6 +153,17 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
             }
             const double prediction = math_sigmoid(dot + model->intercept);
             const double error_i = prediction - vector_get(y, i);
+
+            const double eps = 1e-15;
+            double p = prediction;
+            if (p < eps) {
+                p = eps;
+            }
+            if (p > 1.0 - eps) {
+                p = 1.0 - eps;
+            }
+            const double loss = -(vector_get(y, i)*log(p)+(1-vector_get(y, i))*log(1-p));
+            total_loss += loss;
 
             if (model->fit_intercept == 1) {
                 model->intercept -= alpha * error_i;
@@ -175,6 +197,9 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
                 vector_set(model->coef, j, w_j);
             }
         }
+        if (print_every > 0 && (iter % print_every == 0 || iter == num_iters - 1)) {
+            printf("Epoch: %d | Cost (LOSS): [%lf]\n", iter + 1, total_loss / m);
+        }
     }
     vector_free(indices);
 }
@@ -189,7 +214,7 @@ Vector *logistic_regression_predict_proba(LogisticRegression *model, Matrix *X) 
         return NULL;
     }
     if (X->cols != model->number_of_features) {
-        CUSTOM_ERROR("Dimension mismatch");
+        CUSTOM_ERROR("X->cols must equal number_of_features");
         return NULL;
     }
 

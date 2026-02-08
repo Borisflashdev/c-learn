@@ -8,7 +8,7 @@ Scaler *scaler_create(const ScalerType type, const int col_start, const int col_
         return NULL;
     }
     if (col_start < 0 || col_end < 0 || col_end <= col_start) {
-        INDEX_ERROR();
+        CUSTOM_ERROR("'col_start' must be >= 0 and 'col_end' must be > col_start");
         return NULL;
     }
 
@@ -49,7 +49,7 @@ void scaler_fit(Scaler *scaler, Matrix *X) {
         return;
     }
     if (scaler->col_start > X->cols || scaler->col_end > X->cols) {
-        INDEX_ERROR();
+        CUSTOM_ERROR("Scaler column range exceeds matrix dimensions");
         return;
     }
     if (scaler->params1) {
@@ -111,7 +111,7 @@ void scaler_transform(Scaler *scaler, Matrix *X) {
         return;
     }
     if (scaler->col_start > X->cols || scaler->col_end > X->cols) {
-        INDEX_ERROR();
+        CUSTOM_ERROR("Scaler column range exceeds matrix dimensions");
         return;
     }
     if (scaler->fitted == 0) {
@@ -128,19 +128,20 @@ void scaler_transform(Scaler *scaler, Matrix *X) {
                 case MIN_MAX_NORMALIZATION: {
                     const double max = scaler->params1[n];
                     const double min = scaler->params2[n];
-                    scaled_val = (x - min) / (max - min);
+                    const double range = max - min;
+                    scaled_val = range == 0 ? 0 : (x - min) / range;
                     break;
                 }
                 case MEAN_NORMALIZATION: {
                     const double mean = scaler->params1[n];
                     const double diff = scaler->params2[n];
-                    scaled_val = (x - mean) / diff;
+                    scaled_val = diff == 0 ? 0 : (x - mean) / diff;
                     break;
                 }
                 case STANDARDIZATION: {
                     const double mean = scaler->params1[n];
                     const double std = scaler->params2[n];
-                    scaled_val = (x - mean) / std;
+                    scaled_val = std == 0 ? 0 : (x - mean) / std;
                     break;
                 }
                 default: {
@@ -173,7 +174,7 @@ void scaler_inverse_transform(Scaler *scaler, Matrix *X) {
         return;
     }
     if (scaler->col_start > X->cols || scaler->col_end > X->cols) {
-        INDEX_ERROR();
+        CUSTOM_ERROR("Scaler column range exceeds matrix dimensions");
         return;
     }
     if (scaler->fitted == 0) {
