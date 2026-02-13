@@ -136,36 +136,37 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const int ba
     model->lambda = lambda;
     model->ratio = ratio;
 
-    Matrix *y_col = vector_to_matrix(y);
-    Matrix *set = matrix_concat(X, y_col);
-    matrix_free(y_col);
+    Vector *indices = vector_create(X->rows);
+    for (int i = 0; i < indices->dim; i++) {
+        vector_set(indices, i, i);
+    }
 
     for (int iter = 0; iter < num_iters; iter++) {
-        Matrix *shuffle = matrix_shuffle_rows(set);
+        vector_shuffle(indices);
         double total_epoch_loss = 0;
 
-        for (int k = 0; k < shuffle->rows; k += batch) {
-            const int current_batch_size = k + batch > shuffle->rows ? shuffle->rows - k : batch;
+        for (int k = 0; k < X->rows; k += batch) {
+            const int current_batch_size = k + batch > X->rows ? X->rows - k : batch;
 
             Vector *grad_sums = vector_create(model->number_of_features);
             double intercept_grad_sum = 0;
 
             for (int i = 0; i < current_batch_size; i++) {
-                const int row_idx = k + i;
+                const int row_idx = (int)vector_get(indices, k + i);
 
                 double y_hat = 0;
                 for (int j = 0; j < model->number_of_features; j++) {
-                    y_hat += matrix_get(shuffle, row_idx, j) * vector_get(model->coef, j);
+                    y_hat += matrix_get(X, row_idx, j) * vector_get(model->coef, j);
                 }
                 if (model->fit_intercept) {
                     y_hat += model->intercept;
                 }
 
-                const double error = y_hat - matrix_get(shuffle, row_idx, shuffle->cols - 1);
+                const double error = y_hat - vector_get(y, row_idx);
                 total_epoch_loss += error * error;
 
                 for (int j = 0; j < model->number_of_features; j++) {
-                    vector_set(grad_sums, j, vector_get(grad_sums, j) + error * matrix_get(shuffle, row_idx, j));
+                    vector_set(grad_sums, j, vector_get(grad_sums, j) + error * matrix_get(X, row_idx, j));
                 }
                 intercept_grad_sum += error;
             }
@@ -201,11 +202,10 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const int ba
         }
 
         if (print_every > 0 && (iter % print_every == 0 || iter == num_iters - 1)) {
-            printf("Epoch: %d | Cost (MSE): [%lf]\n", iter + 1, total_epoch_loss / (2 * shuffle->rows));
+            printf("Epoch: %d | Cost (MSE): [%lf]\n", iter + 1, total_epoch_loss / (2.0 * X->rows));
         }
-        matrix_free(shuffle);
     }
-    matrix_free(set);
+    vector_free(indices);
 }
 
 Vector *sgd_regression_predict(SGDRegression *model, Matrix *X) {
