@@ -162,7 +162,6 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const int ba
                 }
 
                 const double error = y_hat - matrix_get(shuffle, row_idx, shuffle->cols - 1);
-
                 total_epoch_loss += error * error;
 
                 for (int j = 0; j < model->number_of_features; j++) {
