@@ -62,70 +62,78 @@ void linear_regression_fit(LinearRegression *model, Matrix *X, Vector *y, const 
         return;
     }
 
+    const int n_features = X->cols;
+    const int n_samples = X->rows;
+    const int size = model->fit_intercept ? n_features + 1 : n_features;
     model->lambda = lambda;
-    Matrix *X_use = NULL;
-    if (model->fit_intercept == 0) {
-        X_use = matrix_copy(X);
-    } else {
-        Matrix *X_1 = matrix_create(X->rows, 1);
-        for (int i = 0; i < X->rows; i++) {
-            matrix_set(X_1, i, 0, 1);
+
+    Matrix *A = matrix_create(size, size);
+    Vector *b = vector_create(size);
+
+    for (int i = 0; i < n_samples; i++) {
+        for (int row = 0; row < size; row++) {
+            double val_row;
+            if (model->fit_intercept) {
+                val_row = row == 0 ? 1.0 : matrix_get(X, i, row - 1);
+            } else {
+                val_row = matrix_get(X, i, row);
+            }
+
+            vector_set(b, row, vector_get(b, row) + val_row * vector_get(y, i));
+
+            for (int col = row; col < size; col++) {
+                double val_col;
+                if (model->fit_intercept) {
+                    val_col = col == 0 ? 1.0 : matrix_get(X, i, col - 1);
+                } else {
+                    val_col = matrix_get(X, i, col);
+                }
+
+                const double current_val = matrix_get(A, row, col);
+                const double new_val = current_val + val_row * val_col;
+                matrix_set(A, row, col, new_val);
+                if (row != col) {
+                    matrix_set(A, col, row, new_val);
+                }
+            }
         }
-        X_use = matrix_concat(X_1, X);
-        matrix_free(X_1);
     }
 
-    Matrix *lambda_I = matrix_create(X_use->cols, X_use->cols);
-    if (!lambda_I) {
-        NULL_ERROR("Matrix");
+    const int start_idx = model->fit_intercept ? 1 : 0;
+    for (int i = start_idx; i < size; i++) {
+        const double val = matrix_get(A, i, i);
+        matrix_set(A, i, i, val + lambda);
+    }
+
+    Matrix *A_inv = matrix_inverse(A, 0);
+    if (!A_inv) {
+        CUSTOM_ERROR("Matrix is singular");
+        matrix_free(A);
+        vector_free(b);
         return;
     }
-    for (int i = 0; i < lambda_I->cols; i++) {
-        lambda_I->data[i * lambda_I->cols + i] = lambda;
-    }
 
-    if (model->fit_intercept == 1) {
-        matrix_set(lambda_I, 0, 0, 0);
-    }
+    if (model->fit_intercept) {
+        double inter_val = 0;
+        for (int j = 0; j < size; j++) inter_val += matrix_get(A_inv, 0, j) * vector_get(b, j);
+        model->intercept = inter_val;
 
-    Matrix *y_mat = vector_to_matrix(y);
-    Matrix *Xt = matrix_transpose(X_use, 0);
-    Matrix *XtX = matrix_multiplication(Xt, X_use);
-    Matrix *XtX_lambda = matrix_arithmetic(XtX, lambda_I, '+');
-    Matrix *XtX_inv = matrix_inverse(XtX_lambda, 0);
-    if (!XtX_inv) {
-        CUSTOM_ERROR("Matrix is singular, cannot compute inverse");
-        matrix_free(X_use);
-        matrix_free(lambda_I);
-        matrix_free(y_mat);
-        matrix_free(Xt);
-        matrix_free(XtX);
-        matrix_free(XtX_lambda);
-        return;
-    }
-    Matrix *XtX_inv_Xt = matrix_multiplication(XtX_inv, Xt);
-    Matrix *w_mat = matrix_multiplication(XtX_inv_Xt, y_mat);
-
-    if (model->fit_intercept == 0) {
-        for (int i = 0; i < w_mat->rows; i++) {
-            vector_set(model->coef, i, matrix_get(w_mat, i, 0));
+        for (int i = 1; i < size; i++) {
+            double w_i = 0;
+            for (int j = 0; j < size; j++) w_i += matrix_get(A_inv, i, j) * vector_get(b, j);
+            vector_set(model->coef, i - 1, w_i);
         }
     } else {
-        model->intercept = matrix_get(w_mat, 0, 0);
-        for (int i = 1; i < w_mat->rows; i++) {
-            vector_set(model->coef, i-1, matrix_get(w_mat, i, 0));
+        for (int i = 0; i < size; i++) {
+            double w_i = 0;
+            for (int j = 0; j < size; j++) w_i += matrix_get(A_inv, i, j) * vector_get(b, j);
+            vector_set(model->coef, i, w_i);
         }
     }
 
-    matrix_free(X_use);
-    matrix_free(lambda_I);
-    matrix_free(y_mat);
-    matrix_free(Xt);
-    matrix_free(XtX);
-    matrix_free(XtX_lambda);
-    matrix_free(XtX_inv);
-    matrix_free(XtX_inv_Xt);
-    matrix_free(w_mat);
+    matrix_free(A);
+    matrix_free(A_inv);
+    vector_free(b);
 }
 
 Vector *linear_regression_predict(LinearRegression *model, Matrix *X) {
@@ -137,19 +145,22 @@ Vector *linear_regression_predict(LinearRegression *model, Matrix *X) {
         NULL_ERROR("Matrix");
         return NULL;
     }
-
-    Matrix *w_mat = vector_to_matrix(model->coef);
-    Matrix *y_hat = matrix_multiplication(X, w_mat);
-    Vector *res = matrix_to_vector(y_hat, 0, 0, y_hat->rows);
-
-    matrix_free(w_mat);
-    matrix_free(y_hat);
-    if (model->fit_intercept == 0) {
-        return res;
+    if (X->cols != model->number_of_features) {
+        CUSTOM_ERROR("X->cols must equal number_of_features");
+        return NULL;
     }
 
+    Vector *res = vector_create(X->rows);
     for (int i = 0; i < res->dim; i++) {
-        res->data[i] += model->intercept;
+        double dot = 0;
+        for (int j = 0; j < model->coef->dim; j++) {
+            dot += vector_get(model->coef, j) * matrix_get(X, i, j);
+        }
+        if (model->fit_intercept == 1) {
+            vector_set(res, i, dot + model->intercept);
+        } else {
+            vector_set(res, i, dot);
+        }
     }
     return res;
 }

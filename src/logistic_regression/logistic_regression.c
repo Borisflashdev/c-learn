@@ -47,7 +47,7 @@ void logistic_regression_free(LogisticRegression *model) {
     free(model);
 }
 
-void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, double lambda, double ratio, const int print_every) {
+void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, const int batch, const double alpha, const int num_iters, double lambda, double ratio, const int print_every) {
     if (!model) {
         NULL_ERROR("LogisticRegression model");
         return;
@@ -120,85 +120,88 @@ void logistic_regression_fit(LogisticRegression *model, Matrix *X, Vector *y, co
         }
     }
 
-    const int m = X->rows;
-    const int n = X->cols;
-
     const uint64_t seed = model->random_seed < 0 ? (uint64_t)time(NULL) : (uint64_t)model->random_seed;
     pcg32_seed(seed);
 
-    const double limit = math_xavier(n, 1);
+    const double limit = math_xavier(X->cols, 1);
     for (int i = 0; i < model->number_of_features; i++) {
-        const double random_w = pcg32_random_double() / (double)RAND_MAX * 2.0 * limit - limit;
+        const double random_w = pcg32_random_double() * 2.0 * limit - limit;
         vector_set(model->coef, i, random_w);
     }
     model->intercept = 0;
     model->lambda = lambda;
     model->ratio = ratio;
 
-    Vector *indices = vector_create(m);
-    for (int i = 0; i < m; i++) {
+    Vector *indices = vector_create(X->rows);
+    for (int i = 0; i < indices->dim; i++) {
         vector_set(indices, i, i);
     }
 
     for (int iter = 0; iter < num_iters; iter++) {
         vector_shuffle(indices);
-        double total_loss = 0;
+        double total_epoch_loss = 0;
 
-        for (int idx = 0; idx < m; idx++) {
-            const int i = (int) vector_get(indices, idx);
+        for (int k = 0; k < X->rows; k += batch) {
+            const int current_batch_size = k + batch > X->rows ? X->rows - k : batch;
 
-            double dot = 0;
-            for (int j = 0; j < n; j++) {
-                dot += matrix_get(X, i, j) * vector_get(model->coef, j);
+            Vector *grad_sums = vector_create(model->number_of_features);
+            double intercept_grad_sum = 0;
+
+            for (int i = 0; i < current_batch_size; i++) {
+                const int row_idx = (int)vector_get(indices, k + i);
+
+                double dot = 0;
+                for (int j = 0; j < model->number_of_features; j++) {
+                    dot += matrix_get(X, row_idx, j) * vector_get(model->coef, j);
+                }
+                if (model->fit_intercept) {
+                    dot += model->intercept;
+                }
+
+                const double y_hat = math_sigmoid(dot);
+                const double error = y_hat - vector_get(y, row_idx);
+
+                const double eps = 1e-15;
+                total_epoch_loss += -1 * vector_get(y, row_idx) * log(y_hat + eps) - (1 - vector_get(y, row_idx)) * log(1 - y_hat + eps);
+
+                for (int j = 0; j < model->number_of_features; j++) {
+                    vector_set(grad_sums, j, vector_get(grad_sums, j) + error * matrix_get(X, row_idx, j));
+                }
+                intercept_grad_sum += error;
             }
-            const double prediction = math_sigmoid(dot + model->intercept);
-            const double error_i = prediction - vector_get(y, i);
 
-            const double eps = 1e-15;
-            double p = prediction;
-            if (p < eps) {
-                p = eps;
-            }
-            if (p > 1.0 - eps) {
-                p = 1.0 - eps;
-            }
-            const double loss = -(vector_get(y, i)*log(p)+(1-vector_get(y, i))*log(1-p));
-            total_loss += loss;
-
-            if (model->fit_intercept == 1) {
-                model->intercept -= alpha * error_i;
-            }
-
-            for (int j = 0; j < n; j++) {
-                const double xi_j = matrix_get(X, i, j);
+            for (int j = 0; j < model->number_of_features; j++) {
+                const double grad_j = vector_get(grad_sums, j) / current_batch_size;
                 double w_j = vector_get(model->coef, j);
 
-                const double grad_j = error_i * xi_j;
-
                 switch (model->penalty) {
-                    case NO_PENALTY: {
+                    case L2_RIDGE:
+                        w_j -= alpha * (grad_j + lambda * w_j);
+                        break;
+                    case L1_LASSO:
+                        w_j -= alpha * (grad_j + lambda * (w_j > 0 ? 1 : -1));
+                        break;
+                    case ELASTIC_NET: {
+                        const double l1 = ratio * (w_j > 0 ? 1 : -1);
+                        const double l2 = (1.0 - ratio) * w_j;
+                        w_j -= alpha * (grad_j + lambda * (l1 + l2));
+                        break;
+                    }
+                    default:
                         w_j -= alpha * grad_j;
                         break;
-                    }
-                    case L1_LASSO: {
-                        w_j -= alpha * (grad_j + math_sign(w_j)*lambda);
-                        break;
-                    }
-                    case L2_RIDGE: {
-                        w_j -= alpha * (grad_j + lambda*w_j);
-                        break;
-                    }
-                    case ELASTIC_NET: {
-                        const double penalty = lambda * (ratio * math_sign(w_j)+(1-ratio)*w_j);
-                        w_j = w_j - alpha * (grad_j + penalty);
-                        break;
-                    }
                 }
                 vector_set(model->coef, j, w_j);
             }
+
+            if (model->fit_intercept) {
+                model->intercept -= alpha * (intercept_grad_sum / current_batch_size);
+            }
+            vector_free(grad_sums);
         }
+
         if (print_every > 0 && (iter % print_every == 0 || iter == num_iters - 1)) {
-            printf("Epoch: %d | Cost (LOSS): [%lf]\n", iter + 1, total_loss / m);
+            printf("Epoch: %d | Cost (LOSS): [%lf]\n", iter + 1, total_epoch_loss / X->rows);
         }
     }
     vector_free(indices);
@@ -229,13 +232,8 @@ Vector *logistic_regression_predict_proba(LogisticRegression *model, Matrix *X) 
         for (int j = 0; j < X->cols; j++) {
             dot += matrix_get(X, i, j) * vector_get(model->coef, j);
         }
-        if (model->fit_intercept == 0) {
-            res->data[i] = math_sigmoid(dot);
-        } else {
-            res->data[i] = math_sigmoid(dot+model->intercept);
-        }
+        vector_set(res, i, model->fit_intercept == 0 ? math_sigmoid(dot) : math_sigmoid(dot+model->intercept));
     }
-
     return res;
 }
 
@@ -246,12 +244,7 @@ Vector *logistic_regression_predict(LogisticRegression *model, Matrix *X) {
         return NULL;
     }
     for (int i = 0; i < res->dim; i++) {
-        if (res->data[i] >= model->threshold) {
-            res->data[i] = 1;
-        } else {
-            res->data[i] = 0;
-        }
+        vector_set(res, i, vector_get(res, i) >= model->threshold ? 1 : 0);
     }
-
     return res;
 }

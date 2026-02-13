@@ -55,4 +55,6 @@ void matrix_apply_col(Matrix *X, int col, double (*func)(double));
 Matrix *vector_to_matrix(const Vector *x);
 Vector *matrix_to_vector(const Matrix *X, int col, int row_start, int row_end);
 
+Matrix *matrix_shuffle_rows(Matrix *X);
+
 #endif
