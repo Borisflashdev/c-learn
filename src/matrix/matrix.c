@@ -4,28 +4,6 @@
 
 #include "matrix.h"
 
-static int read_line(char **buf, size_t *cap, FILE *fp) {
-    size_t len = 0;
-    if (*buf == NULL) {
-        *cap = 1024;
-        *buf = malloc(*cap);
-        if (!*buf) return -1;
-    }
-    while (1) {
-        if (fgets(*buf + len, (int)(*cap - len), fp) == NULL)
-            return len > 0 ? (int)len : -1;
-        len += strlen(*buf + len);
-        if (len > 0 && (*buf)[len - 1] == '\n')
-            return (int)len;
-        if (feof(fp))
-            return (int)len;
-        *cap *= 2;
-        char *tmp = realloc(*buf, *cap);
-        if (!tmp) return -1;
-        *buf = tmp;
-    }
-}
-
 Matrix *matrix_create(const int rows, const int cols) {
     if (rows < 1 || cols < 1) {
         CUSTOM_ERROR("Invalid matrix dimensions");
@@ -96,6 +74,28 @@ void matrix_set(Matrix *X, const int i, const int j, const double value) {
         return;
     }
     X->data[i * X->cols + j] = value;
+}
+
+static int read_line(char **buf, size_t *cap, FILE *fp) {
+    size_t len = 0;
+    if (*buf == NULL) {
+        *cap = 1024;
+        *buf = malloc(*cap);
+        if (!*buf) return -1;
+    }
+    while (1) {
+        if (fgets(*buf + len, (int)(*cap - len), fp) == NULL)
+            return len > 0 ? (int)len : -1;
+        len += strlen(*buf + len);
+        if (len > 0 && (*buf)[len - 1] == '\n')
+            return (int)len;
+        if (feof(fp))
+            return (int)len;
+        *cap *= 2;
+        char *tmp = realloc(*buf, *cap);
+        if (!tmp) return -1;
+        *buf = tmp;
+    }
 }
 
 Matrix *read_csv(const char *path, const char separator, const int has_header) {
