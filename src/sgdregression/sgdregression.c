@@ -47,7 +47,7 @@ void sgd_regression_free(SGDRegression *model) {
     free(model);
 }
 
-void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double alpha, const int num_iters, const double lambda, const double ratio, const int print_every) {
+void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const int batch, const double alpha, const int num_iters, const double lambda, const double ratio, const int print_every) {
     if (!model) {
         NULL_ERROR("SGDRegression model");
         return;
@@ -58,6 +58,10 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
     }
     if (!y) {
         NULL_ERROR("Vector");
+        return;
+    }
+    if (batch <= 0 || batch > y->dim) {
+        CUSTOM_ERROR("batch must be between 1 and the number of samples");
         return;
     }
     if (X->rows != y->dim || X->cols != model->number_of_features) {
@@ -120,13 +124,10 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
         }
     }
 
-    const int m = X->rows;
-    const int n = X->cols;
-
     const uint64_t seed = model->random_seed < 0 ? (uint64_t)time(NULL) : (uint64_t)model->random_seed;
     pcg32_seed(seed);
 
-    const double limit = math_xavier(n, 1);
+    const double limit = math_xavier(X->cols, 1);
     for (int i = 0; i < model->number_of_features; i++) {
         const double random_w = pcg32_random_double() * 2.0 * limit - limit;
         vector_set(model->coef, i, random_w);
@@ -135,64 +136,77 @@ void sgd_regression_fit(SGDRegression *model, Matrix *X, Vector *y, const double
     model->lambda = lambda;
     model->ratio = ratio;
 
-    Vector *indices = vector_create(m);
-    for (int i = 0; i < m; i++) {
-        vector_set(indices, i, i);
-    }
+    Matrix *y_col = vector_to_matrix(y);
+    Matrix *set = matrix_concat(X, y_col);
+    matrix_free(y_col);
 
     for (int iter = 0; iter < num_iters; iter++) {
-        vector_shuffle(indices);
-        double total_error = 0.0;
+        Matrix *shuffle = matrix_shuffle_rows(set);
+        double total_epoch_loss = 0;
 
-        for (int idx = 0; idx < m; idx++) {
-            const int i = (int) vector_get(indices, idx);
+        for (int k = 0; k < shuffle->rows; k += batch) {
+            const int current_batch_size = k + batch > shuffle->rows ? shuffle->rows - k : batch;
 
-            double dot = 0;
-            for (int j = 0; j < n; j++) {
-                dot += matrix_get(X, i, j) * vector_get(model->coef, j);
+            Vector *grad_sums = vector_create(model->number_of_features);
+            double intercept_grad_sum = 0;
+
+            for (int i = 0; i < current_batch_size; i++) {
+                const int row_idx = k + i;
+
+                double y_hat = 0;
+                for (int j = 0; j < model->number_of_features; j++) {
+                    y_hat += matrix_get(shuffle, row_idx, j) * vector_get(model->coef, j);
+                }
+                if (model->fit_intercept) {
+                    y_hat += model->intercept;
+                }
+
+                const double error = y_hat - matrix_get(shuffle, row_idx, shuffle->cols - 1);
+
+                total_epoch_loss += error * error;
+
+                for (int j = 0; j < model->number_of_features; j++) {
+                    vector_set(grad_sums, j, vector_get(grad_sums, j) + error * matrix_get(shuffle, row_idx, j));
+                }
+                intercept_grad_sum += error;
             }
-            const double prediction = dot + model->intercept;
-            const double error_i = prediction - vector_get(y, i);
 
-            total_error += error_i * error_i;
-
-            if (model->fit_intercept == 1) {
-                model->intercept -= alpha * error_i;
-            }
-
-            for (int j = 0; j < n; j++) {
-                const double xi_j = matrix_get(X, i, j);
+            for (int j = 0; j < model->number_of_features; j++) {
+                const double grad_j = vector_get(grad_sums, j) / current_batch_size;
                 double w_j = vector_get(model->coef, j);
 
-                const double grad_j = error_i * xi_j;
-
                 switch (model->penalty) {
-                    case NO_PENALTY: {
+                    case L2_RIDGE:
+                        w_j -= alpha * (grad_j + lambda * w_j);
+                        break;
+                    case L1_LASSO:
+                        w_j -= alpha * (grad_j + lambda * (w_j > 0 ? 1 : -1));
+                        break;
+                    case ELASTIC_NET: {
+                        const double l1 = ratio * (w_j > 0 ? 1 : -1);
+                        const double l2 = (1.0 - ratio) * w_j;
+                        w_j -= alpha * (grad_j + lambda * (l1 + l2));
+                        break;
+                    }
+                    default:
                         w_j -= alpha * grad_j;
                         break;
-                    }
-                    case L1_LASSO: {
-                        w_j -= alpha * (grad_j + math_sign(w_j)*lambda);
-                        break;
-                    }
-                    case L2_RIDGE: {
-                        w_j -= alpha * (grad_j + lambda*w_j);
-                        break;
-                    }
-                    case ELASTIC_NET: {
-                        const double penalty = lambda * (ratio * math_sign(w_j)+(1-ratio)*w_j);
-                        w_j = w_j - alpha * (grad_j + penalty);
-                        break;
-                    }
                 }
                 vector_set(model->coef, j, w_j);
             }
+
+            if (model->fit_intercept) {
+                model->intercept -= alpha * (intercept_grad_sum / current_batch_size);
+            }
+            vector_free(grad_sums);
         }
+
         if (print_every > 0 && (iter % print_every == 0 || iter == num_iters - 1)) {
-            printf("Epoch: %d | Cost (MSE): [%lf]\n", iter + 1, total_error/(2*m));
+            printf("Epoch: %d | Cost (MSE): [%lf]\n", iter + 1, total_epoch_loss / (2 * shuffle->rows));
         }
+        matrix_free(shuffle);
     }
-    vector_free(indices);
+    matrix_free(set);
 }
 
 Vector *sgd_regression_predict(SGDRegression *model, Matrix *X) {
@@ -209,18 +223,17 @@ Vector *sgd_regression_predict(SGDRegression *model, Matrix *X) {
         return NULL;
     }
 
-    Matrix *w_mat = vector_to_matrix(model->coef);
-    Matrix *y_hat = matrix_multiplication(X, w_mat);
-    Vector *res = matrix_to_vector(y_hat, 0, 0, y_hat->rows);
-
-    matrix_free(w_mat);
-    matrix_free(y_hat);
-    if (model->fit_intercept == 0) {
-        return res;
-    }
-
+    Vector *res = vector_create(X->rows);
     for (int i = 0; i < res->dim; i++) {
-        res->data[i] += model->intercept;
+        double dot = 0;
+        for (int j = 0; j < model->coef->dim; j++) {
+            dot += vector_get(model->coef, j) * matrix_get(X, i, j);
+        }
+        if (model->fit_intercept == 1) {
+            vector_set(res, i, dot + model->intercept);
+        } else {
+            vector_set(res, i, dot);
+        }
     }
     return res;
 }

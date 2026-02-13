@@ -918,3 +918,24 @@ Vector *matrix_to_vector(const Matrix *X, const int col, const int row_start, co
 
     return x;
 }
+
+Matrix *matrix_shuffle_rows(Matrix *X) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NULL;
+    }
+    Matrix *res = matrix_copy(X);
+    if (!res) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+    for (int i = res->rows - 1; i > 0; i--) {
+        const int j = (int)(pcg32_random_double() * (i + 1));
+        for (int k = 0; k < res->cols; k++) {
+            const double temp = res->data[i * res->cols + k];
+            res->data[i * res->cols + k] = res->data[j * res->cols + k];
+            res->data[j * res->cols + k] = temp;
+        }
+    }
+    return res;
+}
