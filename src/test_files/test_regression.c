@@ -1,10 +1,8 @@
-
 // Import the necessary packages
 #include "../linear_regression/linear_regression.h"
 #include "../matrix/matrix.h"
 
 void test_regression() {
-
     // Load dataset from CSV
     Matrix *df = read_csv("apartments.csv", ',', 1);
 
