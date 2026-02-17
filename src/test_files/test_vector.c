@@ -22,8 +22,7 @@ void test_vector() {
     vector_print(c);
 
     // Statistical functions
-    printf("Min: %.2f | Max: %.2f | Mean: %.2f | Std: %.2f\n",
-           vector_min(a), vector_max(a), vector_mean(a), vector_std(a, 0));
+    printf("Min: %.2f | Max: %.2f | Mean: %.2f | Std: %.2f\n", vector_min(a), vector_max(a), vector_mean(a), vector_std(a, 0));
 
     // Dot product
     printf("Dot product: %.2f\n", vector_dot_product(a, b));
