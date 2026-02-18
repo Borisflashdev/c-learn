@@ -32,6 +32,7 @@ typedef struct DenseLayer {
 } DenseLayer;
 
 typedef struct {
+    int input_size;
     int random_seed;
     int num_layers;
     DenseLayer **layers;
@@ -40,7 +41,7 @@ typedef struct {
     double learning_rate;
 } NeuralNetwork;
 
-NeuralNetwork neural_network_create(int num_layers, LossFunction loss_function, Optimizer optimizer, int random_seed);
+NeuralNetwork neural_network_create(int input_size, int num_layers, LossFunction loss_function, Optimizer optimizer, int random_seed);
 void neural_network_free(NeuralNetwork *neural_network);
 void neural_network_describe(NeuralNetwork *neural_network);
 
