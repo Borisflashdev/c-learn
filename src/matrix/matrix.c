@@ -694,6 +694,122 @@ double matrix_mean(const Matrix *X) {
     return sum / size;
 }
 
+double matrix_row_min(const Matrix *X, const int row) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+
+    const int n = X->cols;
+    const int stride = X->rows;
+    double min = X->data[row];
+    for (int i = 1; i < n; i++) {
+        const double val = X->data[i * stride + row];
+        if (val < min) min = val;
+    }
+
+    return min;
+}
+
+double matrix_row_max(const Matrix *X, const int row) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+
+    const int n = X->cols;
+    const int stride = X->rows;
+    double max = X->data[row];
+    for (int i = 1; i < n; i++) {
+        const double val = X->data[i * stride + row];
+        if (val > max) max = val;
+    }
+
+    return max;
+}
+
+double matrix_row_sum(const Matrix *X, const int row) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+
+    double sum = 0;
+    const int stride = X->rows;
+    for (int i = 0; i < X->cols; i++) {
+        sum += X->data[i * stride + row];
+    }
+
+    return sum;
+}
+
+double matrix_row_mean(const Matrix *X, const int row) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+
+    double sum = 0;
+    const int stride = X->rows;
+    for (int i = 0; i < X->cols; i++) {
+        sum += X->data[i * stride + row];
+    }
+
+    return sum / X->cols;
+}
+
+double matrix_row_std(const Matrix *X, const int row, const int ddof) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+    if (ddof != 0 && ddof != 1) {
+        CUSTOM_ERROR("Property 'ddof' must be 0 or 1");
+        return NAN;
+    }
+
+    const int n = X->cols;
+    if (ddof == 1 && n < 2) {
+        CUSTOM_ERROR("At least 2 elements required when ddof=1");
+        return NAN;
+    }
+    const int stride = X->rows;
+    const double mean = matrix_row_mean(X, row);
+
+    double var = 0;
+    for (int i = 0; i < n; i++) {
+        const double diff = X->data[i * stride + row] - mean;
+        var += diff * diff;
+    }
+
+    if (ddof == 0) {
+        var /= n;
+    } else {
+        var /= n - 1;
+    }
+    return sqrt(var);
+}
+
 double matrix_col_min(const Matrix *X, const int col) {
     if (!X) {
         NULL_ERROR("Matrix");
@@ -789,13 +905,12 @@ double matrix_col_std(const Matrix *X, const int col, const int ddof) {
     }
 
     const int n = X->rows;
-    const int stride = X->cols;
-    double mean = 0;
-
-    for (int i = 0; i < n; i++) {
-        mean += X->data[i * stride + col];
+    if (ddof == 1 && n < 2) {
+        CUSTOM_ERROR("At least 2 elements required when ddof=1");
+        return NAN;
     }
-    mean /= n;
+    const int stride = X->cols;
+    const double mean = matrix_row_mean(X, col);
 
     double var = 0;
     for (int i = 0; i < n; i++) {

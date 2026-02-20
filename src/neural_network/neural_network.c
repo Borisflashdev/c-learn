@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <tgmath.h>
 #include <string.h>
 
 NeuralNetwork *neural_network_create(const int input_size, const int num_layers, const LossFunction loss_function, const int random_seed) {
@@ -122,4 +123,65 @@ void neural_network_add_layer(NeuralNetwork *neural_network, const int units, co
     }
 
     neural_network->layers[neural_network->current_num_layers++] = layer;
+}
+
+Matrix *neural_network_predict(NeuralNetwork *neural_network, Matrix *X) {
+    if (!neural_network) {
+        NULL_ERROR("NeuralNetwork model");
+        return NULL;
+    }
+    if (!X) {
+        NULL_ERROR("X matrix");
+        return NULL;
+    }
+
+    Matrix *current = matrix_copy(X);
+    if (!current) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+
+    for (int x = 0; x < neural_network->current_num_layers; x++) {
+        const DenseLayer *layer = neural_network->layers[x];
+
+        Matrix *Z = matrix_multiplication(current, layer->coef);
+        for (int i = 0; i < Z->rows; i++) {
+            for (int j = 0; j < Z->cols; j++) {
+                double new_val = matrix_get(Z, i, j) + vector_get(layer->intercepts, j);
+                switch (layer->activation) {
+                    case ReLU: new_val = math_relu(new_val); break;
+                    case LeakyReLU: new_val = math_leaky_relu(new_val); break;
+                    case SiLU: new_val = math_silu(new_val); break;
+                    case Sigmoid: new_val = math_sigmoid(new_val); break;
+                    case Tanh: new_val = math_tanh(new_val); break;
+                    case Linear: break;
+                    default: break;
+                }
+                matrix_set(Z, i, j, new_val);
+            }
+        }
+
+        if (layer->activation == Softmax) {
+            for (int i = 0; i < Z->rows; i++) {
+
+                const double max_val = matrix_row_max(Z, i);
+
+                double sum = 0.0;
+                for (int j = 0; j < Z->cols; j++) {
+                    const double e = exp(matrix_get(Z, i, j) - max_val);
+                    matrix_set(Z, i, j, e);
+                    sum += e;
+                }
+
+                for (int j = 0; j < Z->cols; j++) {
+                    matrix_set(Z, i, j, matrix_get(Z, i, j) / sum);
+                }
+            }
+        }
+
+        matrix_free(current);
+        current = Z;
+    }
+
+    return current;
 }
