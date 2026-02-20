@@ -35,3 +35,20 @@ NeuralNetwork *neural_network_create(const int input_size, const int num_layers,
 
     return nn;
 }
+
+void neural_network_free(NeuralNetwork *neural_network) {
+    if (!neural_network) {
+        NULL_ERROR("NeuralNetwork model");
+        return;
+    }
+    for (int i = 0; i < neural_network->num_layers; i++) {
+        if (neural_network->layers[i]) {
+            free(neural_network->layers[i]->name);
+            matrix_free(neural_network->layers[i]->coef);
+            vector_free(neural_network->layers[i]->intercepts);
+            free(neural_network->layers[i]);
+        }
+    }
+    free(neural_network->layers);
+    free(neural_network);
+}
