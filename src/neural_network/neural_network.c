@@ -1,5 +1,9 @@
 #include "neural_network.h"
 #include "../errors/errors.h"
+#include "../matrix/matrix.h"
+#include "../vector/vector.h"
+#include "../math_functions/math_functions.h"
+#include "../random/random.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -85,3 +89,37 @@ void neural_network_describe(NeuralNetwork *neural_network) {
     printf("Total parameters: %d\n", total_params);
 }
 
+void neural_network_add_layer(NeuralNetwork *neural_network, const int units, const Activation activation, const char *name) {
+    if (!neural_network) {
+        NULL_ERROR("NeuralNetwork model");
+        return;
+    }
+    if (units <= 0) {
+        CUSTOM_ERROR("'units' must be at least 1");
+        return;
+    }
+    if (neural_network->current_num_layers >= neural_network->num_layers) {
+        CUSTOM_ERROR("Too many layers");
+        return;
+    }
+
+    DenseLayer *layer = malloc(sizeof(DenseLayer));
+    if (!layer) {
+        ALLOCATION_ERROR();
+        return;
+    }
+    layer->name = strdup(name);
+    layer->units = units;
+    layer->activation = activation;
+    layer->coef = matrix_create(neural_network->current_num_layers == 0 ? neural_network->input_size : neural_network->layers[neural_network->current_num_layers-1]->units, units);
+    layer->intercepts =  vector_create(units);
+
+    const double limit = math_xavier(layer->coef->rows, layer->coef->cols);
+    for (int i = 0; i < layer->coef->rows; i++) {
+        for (int j = 0; j < layer->coef->cols; j++) {
+            matrix_set(layer->coef, i, j, pcg32_random_double() * 2.0 * limit - limit);
+        }
+    }
+
+    neural_network->layers[neural_network->current_num_layers++] = layer;
+}
