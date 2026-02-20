@@ -1,4 +1,4 @@
-#include "neural_networks.h"
+#include "neural_network.h"
 #include "../errors/errors.h"
 
 #include <stdlib.h>
