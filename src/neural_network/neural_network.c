@@ -52,3 +52,36 @@ void neural_network_free(NeuralNetwork *neural_network) {
     free(neural_network->layers);
     free(neural_network);
 }
+
+void neural_network_describe(NeuralNetwork *neural_network) {
+    if (!neural_network) {
+        NULL_ERROR("NeuralNetwork model");
+        return;
+    }
+
+    printf("Neural Network Description\n");
+    for (int i = 0; i < neural_network->current_num_layers; i++) {
+        const DenseLayer *layer = neural_network->layers[i];
+
+        char *activation = NULL;
+        switch (layer->activation) {
+            case ReLU: activation = "ReLU"; break;
+            case LeakyReLU: activation = "LeakyReLU"; break;
+            case SiLU: activation = "SiLU"; break;
+            case Sigmoid: activation = "Sigmoid"; break;
+            case Tanh: activation = "Tanh"; break;
+            case Softmax: activation = "Softmax"; break;
+            case Linear: activation = "Linear"; break;
+            default: CUSTOM_ERROR("Unknown activation"); return;
+        }
+
+        printf("%d. %s | Units: %d | Activation: %s | Weights Dimensions: (%d, %d) | Parameters: %d\n", i, layer->name, layer->units, activation, layer->coef->rows, layer->coef->cols, layer->coef->rows * layer->coef->cols + layer->intercepts->dim);
+    }
+
+    int total_params = 0;
+    for (int i = 0; i < neural_network->current_num_layers; i++) {
+        total_params += neural_network->layers[i]->coef->rows * neural_network->layers[i]->coef->cols + neural_network->layers[i]->intercepts->dim;
+    }
+    printf("Total parameters: %d\n", total_params);
+}
+
