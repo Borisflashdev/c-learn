@@ -694,6 +694,117 @@ double matrix_mean(const Matrix *X) {
     return sum / size;
 }
 
+double matrix_row_min(const Matrix *X, const int row) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+
+    const int n = X->cols;
+    double min = X->data[row * X->cols];
+    for (int i = 1; i < n; i++) {
+        const double val = X->data[row * X->cols + i];
+        if (val < min) min = val;
+    }
+
+    return min;
+}
+
+double matrix_row_max(const Matrix *X, const int row) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+
+    const int n = X->cols;
+    double max = X->data[row * X->cols];
+    for (int i = 1; i < n; i++) {
+        const double val = X->data[row * X->cols + i];
+        if (val > max) max = val;
+    }
+
+    return max;
+}
+
+double matrix_row_sum(const Matrix *X, const int row) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+
+    double sum = 0;
+    for (int i = 0; i < X->cols; i++) {
+        sum += X->data[row * X->cols + i];
+    }
+
+    return sum;
+}
+
+double matrix_row_mean(const Matrix *X, const int row) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+
+    double sum = 0;
+    for (int i = 0; i < X->cols; i++) {
+        sum += X->data[row * X->cols + i];
+    }
+
+    return sum / X->cols;
+}
+
+double matrix_row_std(const Matrix *X, const int row, const int ddof) {
+    if (!X) {
+        NULL_ERROR("Matrix");
+        return NAN;
+    }
+    if (row < 0 || row >= X->rows) {
+        INDEX_ERROR();
+        return NAN;
+    }
+    if (ddof != 0 && ddof != 1) {
+        CUSTOM_ERROR("Property 'ddof' must be 0 or 1");
+        return NAN;
+    }
+
+    const int n = X->cols;
+    if (ddof == 1 && n < 2) {
+        CUSTOM_ERROR("At least 2 elements required when ddof=1");
+        return NAN;
+    }
+    const double mean = matrix_row_mean(X, row);
+
+    double var = 0;
+    for (int i = 0; i < n; i++) {
+        const double diff = X->data[row * X->cols + i] - mean;
+        var += diff * diff;
+    }
+
+    if (ddof == 0) {
+        var /= n;
+    } else {
+        var /= n - 1;
+    }
+    return sqrt(var);
+}
+
 double matrix_col_min(const Matrix *X, const int col) {
     if (!X) {
         NULL_ERROR("Matrix");
@@ -789,13 +900,12 @@ double matrix_col_std(const Matrix *X, const int col, const int ddof) {
     }
 
     const int n = X->rows;
-    const int stride = X->cols;
-    double mean = 0;
-
-    for (int i = 0; i < n; i++) {
-        mean += X->data[i * stride + col];
+    if (ddof == 1 && n < 2) {
+        CUSTOM_ERROR("At least 2 elements required when ddof=1");
+        return NAN;
     }
-    mean /= n;
+    const int stride = X->cols;
+    const double mean = matrix_col_mean(X, col);
 
     double var = 0;
     for (int i = 0; i < n; i++) {
@@ -917,6 +1027,39 @@ Vector *matrix_to_vector(const Matrix *X, const int col, const int row_start, co
     }
 
     return x;
+}
+
+Matrix *matrix_one_hot(const Matrix *y, const int num_classes) {
+    if (!y) {
+        NULL_ERROR("Matrix");
+        return NULL;
+    }
+    if (y->cols != 1) {
+        CUSTOM_ERROR("'y' must have exactly 1 column");
+        return NULL;
+    }
+    if (num_classes < 2) {
+        CUSTOM_ERROR("'num_classes' must be at least 2");
+        return NULL;
+    }
+
+    Matrix *result = matrix_create(y->rows, num_classes);
+    if (!result) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+
+    for (int i = 0; i < y->rows; i++) {
+        const int label = (int)y->data[i];
+        if (label < 0 || label >= num_classes) {
+            CUSTOM_ERROR("Label %d out of range [0, %d)", label, num_classes);
+            matrix_free(result);
+            return NULL;
+        }
+        result->data[i * num_classes + label] = 1.0;
+    }
+
+    return result;
 }
 
 Matrix *matrix_shuffle_rows(Matrix *X) {

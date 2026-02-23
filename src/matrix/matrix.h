@@ -43,6 +43,12 @@ double matrix_max(const Matrix *X);
 double matrix_sum(const Matrix *X);
 double matrix_mean(const Matrix *X);
 
+double matrix_row_min(const Matrix *X, int row);
+double matrix_row_max(const Matrix *X, int row);
+double matrix_row_sum(const Matrix *X, int row);
+double matrix_row_mean(const Matrix *X, int row);
+double matrix_row_std(const Matrix *X, int row, int ddof);
+
 double matrix_col_min(const Matrix *X, int col);
 double matrix_col_max(const Matrix *X, int col);
 double matrix_col_sum(const Matrix *X, int col);
@@ -56,5 +62,6 @@ Matrix *vector_to_matrix(const Vector *x);
 Vector *matrix_to_vector(const Matrix *X, int col, int row_start, int row_end);
 
 Matrix *matrix_shuffle_rows(Matrix *X);
+Matrix *matrix_one_hot(const Matrix *y, int num_classes);
 
 #endif
