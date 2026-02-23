@@ -62,5 +62,6 @@ Matrix *vector_to_matrix(const Vector *x);
 Vector *matrix_to_vector(const Matrix *X, int col, int row_start, int row_end);
 
 Matrix *matrix_shuffle_rows(Matrix *X);
+Matrix *matrix_one_hot(const Matrix *y, int num_classes);
 
 #endif

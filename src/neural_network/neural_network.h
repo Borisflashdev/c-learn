@@ -2,6 +2,7 @@
 #define NEURAL_NETWORKS_H
 #include "../matrix/matrix.h"
 #include "../vector/vector.h"
+#include "../penalty_types/penalty_types.h"
 
 typedef enum {
     BinaryCrossEntropy,
@@ -25,6 +26,9 @@ typedef struct DenseLayer {
     Matrix *coef;
     Vector *intercepts;
     Activation activation;
+    Penalty penalty;
+    double lambda;
+    double ratio;
 } DenseLayer;
 
 typedef struct {
@@ -40,9 +44,9 @@ NeuralNetwork *neural_network_create(int input_size, int num_layers, LossFunctio
 void neural_network_free(NeuralNetwork *neural_network);
 void neural_network_describe(NeuralNetwork *neural_network);
 
-void neural_network_add_layer(NeuralNetwork *neural_network, int units, Activation activation, const char *name);
+void neural_network_add_layer(NeuralNetwork *neural_network, int units, Activation activation, Penalty penalty, double lambda, double ratio, const char *name);
 
-void neural_network_fit(NeuralNetwork *neural_network, Matrix *X, Matrix *y, int epochs, double learning_rate);
+void neural_network_fit(NeuralNetwork *neural_network, Matrix *X, Matrix *y, int epochs, double learning_rate, int batch_size);
 Matrix *neural_network_predict(NeuralNetwork *neural_network, Matrix *X);
 
 #endif

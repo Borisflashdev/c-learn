@@ -705,10 +705,9 @@ double matrix_row_min(const Matrix *X, const int row) {
     }
 
     const int n = X->cols;
-    const int stride = X->rows;
-    double min = X->data[row];
+    double min = X->data[row * X->cols];
     for (int i = 1; i < n; i++) {
-        const double val = X->data[i * stride + row];
+        const double val = X->data[row * X->cols + i];
         if (val < min) min = val;
     }
 
@@ -726,10 +725,9 @@ double matrix_row_max(const Matrix *X, const int row) {
     }
 
     const int n = X->cols;
-    const int stride = X->rows;
-    double max = X->data[row];
+    double max = X->data[row * X->cols];
     for (int i = 1; i < n; i++) {
-        const double val = X->data[i * stride + row];
+        const double val = X->data[row * X->cols + i];
         if (val > max) max = val;
     }
 
@@ -747,9 +745,8 @@ double matrix_row_sum(const Matrix *X, const int row) {
     }
 
     double sum = 0;
-    const int stride = X->rows;
     for (int i = 0; i < X->cols; i++) {
-        sum += X->data[i * stride + row];
+        sum += X->data[row * X->cols + i];
     }
 
     return sum;
@@ -766,9 +763,8 @@ double matrix_row_mean(const Matrix *X, const int row) {
     }
 
     double sum = 0;
-    const int stride = X->rows;
     for (int i = 0; i < X->cols; i++) {
-        sum += X->data[i * stride + row];
+        sum += X->data[row * X->cols + i];
     }
 
     return sum / X->cols;
@@ -793,12 +789,11 @@ double matrix_row_std(const Matrix *X, const int row, const int ddof) {
         CUSTOM_ERROR("At least 2 elements required when ddof=1");
         return NAN;
     }
-    const int stride = X->rows;
     const double mean = matrix_row_mean(X, row);
 
     double var = 0;
     for (int i = 0; i < n; i++) {
-        const double diff = X->data[i * stride + row] - mean;
+        const double diff = X->data[row * X->cols + i] - mean;
         var += diff * diff;
     }
 
@@ -910,7 +905,7 @@ double matrix_col_std(const Matrix *X, const int col, const int ddof) {
         return NAN;
     }
     const int stride = X->cols;
-    const double mean = matrix_row_mean(X, col);
+    const double mean = matrix_col_mean(X, col);
 
     double var = 0;
     for (int i = 0; i < n; i++) {
@@ -1032,6 +1027,39 @@ Vector *matrix_to_vector(const Matrix *X, const int col, const int row_start, co
     }
 
     return x;
+}
+
+Matrix *matrix_one_hot(const Matrix *y, const int num_classes) {
+    if (!y) {
+        NULL_ERROR("Matrix");
+        return NULL;
+    }
+    if (y->cols != 1) {
+        CUSTOM_ERROR("'y' must have exactly 1 column");
+        return NULL;
+    }
+    if (num_classes < 2) {
+        CUSTOM_ERROR("'num_classes' must be at least 2");
+        return NULL;
+    }
+
+    Matrix *result = matrix_create(y->rows, num_classes);
+    if (!result) {
+        ALLOCATION_ERROR();
+        return NULL;
+    }
+
+    for (int i = 0; i < y->rows; i++) {
+        const int label = (int)y->data[i];
+        if (label < 0 || label >= num_classes) {
+            CUSTOM_ERROR("Label %d out of range [0, %d)", label, num_classes);
+            matrix_free(result);
+            return NULL;
+        }
+        result->data[i * num_classes + label] = 1.0;
+    }
+
+    return result;
 }
 
 Matrix *matrix_shuffle_rows(Matrix *X) {

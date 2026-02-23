@@ -44,3 +44,23 @@ double math_tanh(const double x) {
     const double e = exp(2.0 * x);
     return (e - 1.0) / (e + 1.0);
 }
+
+double math_derivative_relu(const double x) {
+    return x > 0 ? 1 : 0;
+}
+
+double math_derivative_leaky_relu(const double x) {
+    return x > 0 ? 1 : 0.01;
+}
+
+double math_derivative_silu(const double x) {
+    return math_sigmoid(x) + x * math_derivative_sigmoid(x);
+}
+
+double math_derivative_sigmoid(const double x) {
+    return math_sigmoid(x) * (1 - math_sigmoid(x));
+}
+
+double math_derivative_tanh(const double x) {
+    return 1 - pow(math_tanh(x), 2);
+}
