@@ -235,7 +235,10 @@ void neural_network_fit(NeuralNetwork *neural_network, Matrix *X, Matrix *y, int
 
             Matrix *X_batch = matrix_create(bs, X->cols);
             Matrix *y_batch = matrix_create(bs, y->cols);
-            if (!X_batch || !y_batch) { ALLOCATION_ERROR(); vector_free(indices); return; }
+            if (!X_batch || !y_batch) {
+                ALLOCATION_ERROR(); vector_free(indices);
+                return;
+            }
 
             for (int i = 0; i < bs; i++) {
                 const int row = (int)vector_get(indices, k + i);
